@@ -1,0 +1,125 @@
+  cache (16127, 2, 512) | feature set v1
+  config: epochs=20 seeds=3 tta=(-3, 0, 3) val=0
+  augment: {'order_jitter_bins': 4, 'amplitude_scale': 0.25, 'channel_dropout': 0.15, 'noise_std': 0.05, 'prob': 0.8}
+  repeats: 3 (different base seeds)
+
+======================================================================
+  REPEAT 1/3  base seed 42
+======================================================================
+  device: cuda  cache resident: 66.1 MB
+  epochs=20 early_stop=False seeds=3 tta=(-3, 0, 3)
+  fold  0 K001  (healthy    none      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19  17.7s
+  fold  1 K002  (healthy    none      ) acc=0.0143 F1=0.0094 rec=0.0000 val=nan ep= 19  14.3s
+  fold  2 K003  (healthy    none      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19  14.1s
+  fold  3 K004  (healthy    none      ) acc=0.6768 F1=0.2691 rec=0.8500 val=nan ep= 19  14.2s
+  fold  4 K005  (healthy    none      ) acc=0.6750 F1=0.2687 rec=0.9500 val=nan ep= 19  14.4s
+  fold  5 K006  (healthy    none      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19  14.6s
+  fold  6 KA01  (outer_race artificial) acc=0.9750 F1=0.3291 rec=1.0000 val=nan ep= 19  14.6s
+  fold  7 KA03  (outer_race artificial) acc=0.8357 F1=0.3035 rec=0.8625 val=nan ep= 19  14.7s
+  fold  8 KA04  (outer_race real      ) acc=0.9928 F1=0.3321 rec=0.9873 val=nan ep= 19  14.6s
+  fold  9 KA05  (outer_race artificial) acc=0.9553 F1=0.3257 rec=1.0000 val=nan ep= 19  14.7s
+  fold 10 KA06  (outer_race artificial) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19  14.6s
+  fold 11 KA07  (outer_race artificial) acc=0.8857 F1=0.3131 rec=0.9250 val=nan ep= 19  14.3s
+  fold 12 KA08  (outer_race artificial) acc=0.7754 F1=0.2912 rec=0.7468 val=nan ep= 19  13.7s
+  fold 13 KA09  (outer_race artificial) acc=0.8247 F1=0.3013 rec=0.7875 val=nan ep= 19  13.7s
+  fold 14 KA15  (outer_race real      ) acc=0.5394 F1=0.2336 rec=0.5750 val=nan ep= 19  13.7s
+  fold 15 KA16  (outer_race real      ) acc=0.9911 F1=0.3318 rec=1.0000 val=nan ep= 19  14.2s
+  fold 16 KA22  (outer_race real      ) acc=0.1382 F1=0.0810 rec=0.1375 val=nan ep= 19  13.7s
+  fold 17 KA30  (outer_race real      ) acc=0.2982 F1=0.1531 rec=0.2250 val=nan ep= 19  13.7s
+  fold 18 KI01  (inner_race artificial) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19  13.4s
+  fold 19 KI03  (inner_race artificial) acc=0.8714 F1=0.3104 rec=1.0000 val=nan ep= 19  13.6s
+  fold 20 KI04  (inner_race real      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19  14.0s
+  fold 21 KI05  (inner_race artificial) acc=0.2558 F1=0.1358 rec=0.0625 val=nan ep= 19  14.0s
+  fold 22 KI07  (inner_race artificial) acc=0.7120 F1=0.2773 rec=0.7375 val=nan ep= 19  13.9s
+  fold 23 KI08  (inner_race artificial) acc=0.9731 F1=0.3288 rec=1.0000 val=nan ep= 19  14.0s
+  fold 24 KI14  (inner_race real      ) acc=0.7626 F1=0.2884 rec=0.8088 val=nan ep= 19  14.0s
+  fold 25 KI16  (inner_race real      ) acc=0.8826 F1=0.3125 rec=1.0000 val=nan ep= 19  14.0s
+  fold 26 KI17  (inner_race real      ) acc=0.9946 F1=0.3324 rec=1.0000 val=nan ep= 19  13.9s
+  fold 27 KI18  (inner_race real      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19  14.0s
+  fold 28 KI21  (inner_race real      ) acc=0.6971 F1=0.2738 rec=0.9125 val=nan ep= 19  14.0s
+
+  -> repeat 1: window 0.7838  F1 0.7669  recording 0.8127
+======================================================================
+  REPEAT 2/3  base seed 7961
+======================================================================
+  device: cuda  cache resident: 66.1 MB
+  epochs=20 early_stop=False seeds=3 tta=(-3, 0, 3)
+  fold  0 K001  (healthy    none      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19  13.9s
+  fold  1 K002  (healthy    none      ) acc=0.0107 F1=0.0071 rec=0.0000 val=nan ep= 19  14.0s
+  fold  2 K003  (healthy    none      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19  14.0s
+  fold  3 K004  (healthy    none      ) acc=0.6821 F1=0.2703 rec=0.8750 val=nan ep= 19  13.9s
+  fold  4 K005  (healthy    none      ) acc=0.6643 F1=0.2661 rec=0.9750 val=nan ep= 19  13.9s
+  fold  5 K006  (healthy    none      ) acc=0.9929 F1=0.3321 rec=1.0000 val=nan ep= 19  13.9s
+  fold  6 KA01  (outer_race artificial) acc=0.9374 F1=0.3226 rec=0.9875 val=nan ep= 19  13.9s
+  fold  7 KA03  (outer_race artificial) acc=0.8071 F1=0.2978 rec=0.8250 val=nan ep= 19  13.9s
+  fold  8 KA04  (outer_race real      ) acc=0.9910 F1=0.3318 rec=0.9873 val=nan ep= 19  14.0s
+  fold  9 KA05  (outer_race artificial) acc=0.9589 F1=0.3263 rec=1.0000 val=nan ep= 19  14.0s
+  fold 10 KA06  (outer_race artificial) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19  14.0s
+  fold 11 KA07  (outer_race artificial) acc=0.9036 F1=0.3164 rec=0.9250 val=nan ep= 19  14.0s
+  fold 12 KA08  (outer_race artificial) acc=0.7880 F1=0.2938 rec=0.7468 val=nan ep= 19  14.0s
+  fold 13 KA09  (outer_race artificial) acc=0.8283 F1=0.3020 rec=0.7750 val=nan ep= 19  13.9s
+  fold 14 KA15  (outer_race real      ) acc=0.5502 F1=0.2366 rec=0.6750 val=nan ep= 19  13.9s
+  fold 15 KA16  (outer_race real      ) acc=0.9929 F1=0.3321 rec=1.0000 val=nan ep= 19  14.0s
+  fold 16 KA22  (outer_race real      ) acc=0.1311 F1=0.0772 rec=0.1375 val=nan ep= 19  13.9s
+  fold 17 KA30  (outer_race real      ) acc=0.3214 F1=0.1622 rec=0.2625 val=nan ep= 19  14.1s
+  fold 18 KI01  (inner_race artificial) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19  14.2s
+  fold 19 KI03  (inner_race artificial) acc=0.8571 F1=0.3077 rec=1.0000 val=nan ep= 19  14.9s
+  fold 20 KI04  (inner_race real      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19  13.9s
+  fold 21 KI05  (inner_race artificial) acc=0.2361 F1=0.1274 rec=0.0250 val=nan ep= 19  13.8s
+  fold 22 KI07  (inner_race artificial) acc=0.7209 F1=0.2793 rec=0.7375 val=nan ep= 19  13.8s
+  fold 23 KI08  (inner_race artificial) acc=0.9803 F1=0.3300 rec=1.0000 val=nan ep= 19  13.7s
+  fold 24 KI14  (inner_race real      ) acc=0.7500 F1=0.2857 rec=0.7500 val=nan ep= 19  13.7s
+  fold 25 KI16  (inner_race real      ) acc=0.8719 F1=0.3105 rec=1.0000 val=nan ep= 19  13.5s
+  fold 26 KI17  (inner_race real      ) acc=0.9911 F1=0.3318 rec=1.0000 val=nan ep= 19  13.5s
+  fold 27 KI18  (inner_race real      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19  13.4s
+  fold 28 KI21  (inner_race real      ) acc=0.7240 F1=0.2800 rec=0.9375 val=nan ep= 19  14.1s
+
+  -> repeat 2: window 0.7827  F1 0.7656  recording 0.8148
+======================================================================
+  REPEAT 3/3  base seed 15880
+======================================================================
+  device: cuda  cache resident: 66.1 MB
+  epochs=20 early_stop=False seeds=3 tta=(-3, 0, 3)
+  fold  0 K001  (healthy    none      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19  14.1s
+  fold  1 K002  (healthy    none      ) acc=0.0143 F1=0.0094 rec=0.0000 val=nan ep= 19  14.1s
+  fold  2 K003  (healthy    none      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19  14.2s
+  fold  3 K004  (healthy    none      ) acc=0.6589 F1=0.2648 rec=0.7875 val=nan ep= 19  14.1s
+  fold  4 K005  (healthy    none      ) acc=0.6357 F1=0.2591 rec=0.9375 val=nan ep= 19  14.1s
+  fold  5 K006  (healthy    none      ) acc=0.9982 F1=0.3330 rec=1.0000 val=nan ep= 19  14.2s
+  fold  6 KA01  (outer_race artificial) acc=0.9785 F1=0.3297 rec=1.0000 val=nan ep= 19  14.1s
+  fold  7 KA03  (outer_race artificial) acc=0.8232 F1=0.3010 rec=0.8125 val=nan ep= 19  14.3s
+  fold  8 KA04  (outer_race real      ) acc=0.9928 F1=0.3321 rec=1.0000 val=nan ep= 19  14.1s
+  fold  9 KA05  (outer_race artificial) acc=0.9606 F1=0.3266 rec=1.0000 val=nan ep= 19  14.4s
+  fold 10 KA06  (outer_race artificial) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19  14.0s
+  fold 11 KA07  (outer_race artificial) acc=0.8821 F1=0.3125 rec=0.9250 val=nan ep= 19  13.6s
+  fold 12 KA08  (outer_race artificial) acc=0.7717 F1=0.2904 rec=0.7468 val=nan ep= 19  13.9s
+  fold 13 KA09  (outer_race artificial) acc=0.8318 F1=0.3027 rec=0.7875 val=nan ep= 19  13.8s
+  fold 14 KA15  (outer_race real      ) acc=0.5323 F1=0.2316 rec=0.5750 val=nan ep= 19  13.8s
+  fold 15 KA16  (outer_race real      ) acc=0.9929 F1=0.3321 rec=1.0000 val=nan ep= 19  13.7s
+  fold 16 KA22  (outer_race real      ) acc=0.1293 F1=0.0763 rec=0.1500 val=nan ep= 19  13.6s
+  fold 17 KA30  (outer_race real      ) acc=0.3143 F1=0.1594 rec=0.2625 val=nan ep= 19  13.6s
+  fold 18 KI01  (inner_race artificial) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19  13.7s
+  fold 19 KI03  (inner_race artificial) acc=0.8482 F1=0.3060 rec=1.0000 val=nan ep= 19  13.6s
+  fold 20 KI04  (inner_race real      ) acc=0.9982 F1=0.3330 rec=1.0000 val=nan ep= 19  13.8s
+  fold 21 KI05  (inner_race artificial) acc=0.2343 F1=0.1266 rec=0.0500 val=nan ep= 19  14.0s
+  fold 22 KI07  (inner_race artificial) acc=0.7209 F1=0.2793 rec=0.7375 val=nan ep= 19  13.7s
+  fold 23 KI08  (inner_race artificial) acc=0.9749 F1=0.3291 rec=1.0000 val=nan ep= 19  13.6s
+  fold 24 KI14  (inner_race real      ) acc=0.7626 F1=0.2884 rec=0.7794 val=nan ep= 19  13.7s
+  fold 25 KI16  (inner_race real      ) acc=0.8719 F1=0.3105 rec=1.0000 val=nan ep= 19  13.7s
+  fold 26 KI17  (inner_race real      ) acc=0.9911 F1=0.3318 rec=1.0000 val=nan ep= 19  13.7s
+  fold 27 KI18  (inner_race real      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19  14.0s
+  fold 28 KI21  (inner_race real      ) acc=0.7061 F1=0.2759 rec=0.9125 val=nan ep= 19  14.1s
+
+  -> repeat 3: window 0.7803  F1 0.7630  recording 0.8092
+
+
+======================================================================
+  3 repeats of an identical config
+  metric                   mean      std      min      max
+  --------------------------------------------------------
+  window_acc             0.7823   0.0018   0.7803   0.7838
+  macro_f1               0.7651   0.0020   0.7630   0.7669
+  recording_acc          0.8122   0.0028   0.8092   0.8148
+
+  baseline 0.4153
+  wrote D:\kone\artifacts\runs\repeat_noval.json

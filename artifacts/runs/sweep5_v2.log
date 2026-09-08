@@ -1,0 +1,87 @@
+  feature set v2 | cache (16127, 5, 512) | 29 folds | baseline 0.4153
+
+======================================================================
+  RECIPE base
+  train={}
+  aug={'order_jitter_bins': 4, 'amplitude_scale': 0.25, 'channel_dropout': 0.15, 'noise_std': 0.05, 'prob': 0.8}
+======================================================================
+  device: cuda  cache resident: 165.1 MB
+  epochs=20 early_stop=False seeds=1 tta=(0,)
+  fold  0 K001  (healthy    none      ) acc=0.9982 F1=0.3330 rec=1.0000 val=nan ep= 19   8.3s
+  fold  1 K002  (healthy    none      ) acc=0.0661 F1=0.0413 rec=0.0000 val=nan ep= 19   5.0s
+  fold  2 K003  (healthy    none      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19   4.9s
+  fold  3 K004  (healthy    none      ) acc=0.9304 F1=0.3213 rec=1.0000 val=nan ep= 19   5.0s
+  fold  4 K005  (healthy    none      ) acc=0.7696 F1=0.2899 rec=0.9500 val=nan ep= 19   5.0s
+  fold  5 K006  (healthy    none      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19   5.0s
+  fold  6 KA01  (outer_race artificial) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19   4.9s
+  fold  7 KA03  (outer_race artificial) acc=0.5732 F1=0.2429 rec=0.5000 val=nan ep= 19   5.0s
+  fold  8 KA04  (outer_race real      ) acc=0.9693 F1=0.3281 rec=0.9873 val=nan ep= 19   5.0s
+  fold  9 KA05  (outer_race artificial) acc=0.8623 F1=0.3087 rec=0.9750 val=nan ep= 19   5.0s
+  fold 10 KA06  (outer_race artificial) acc=0.9875 F1=0.3312 rec=1.0000 val=nan ep= 19   5.0s
+  fold 11 KA07  (outer_race artificial) acc=0.8768 F1=0.3114 rec=0.9500 val=nan ep= 19   5.0s
+  fold 12 KA08  (outer_race artificial) acc=0.9149 F1=0.3185 rec=0.9873 val=nan ep= 19   5.0s
+  fold 13 KA09  (outer_race artificial) acc=0.9982 F1=0.3330 rec=1.0000 val=nan ep= 19   5.0s
+  fold 14 KA15  (outer_race real      ) acc=0.8208 F1=0.3005 rec=0.9750 val=nan ep= 19   5.0s
+  fold 15 KA16  (outer_race real      ) acc=0.9679 F1=0.3279 rec=1.0000 val=nan ep= 19   5.1s
+  fold 16 KA22  (outer_race real      ) acc=0.3537 F1=0.1742 rec=0.4500 val=nan ep= 19   5.1s
+  fold 17 KA30  (outer_race real      ) acc=0.2482 F1=0.1326 rec=0.1500 val=nan ep= 19   5.1s
+  fold 18 KI01  (inner_race artificial) acc=0.9982 F1=0.3330 rec=1.0000 val=nan ep= 19   5.1s
+  fold 19 KI03  (inner_race artificial) acc=0.5786 F1=0.2443 rec=0.7500 val=nan ep= 19   5.0s
+  fold 20 KI04  (inner_race real      ) acc=0.8946 F1=0.3148 rec=0.9375 val=nan ep= 19   5.0s
+  fold 21 KI05  (inner_race artificial) acc=0.0072 F1=0.0047 rec=0.0000 val=nan ep= 19   5.0s
+  fold 22 KI07  (inner_race artificial) acc=0.7674 F1=0.2895 rec=0.8625 val=nan ep= 19   5.0s
+  fold 23 KI08  (inner_race artificial) acc=0.9821 F1=0.3303 rec=0.9875 val=nan ep= 19   5.0s
+  fold 24 KI14  (inner_race real      ) acc=0.8697 F1=0.3101 rec=1.0000 val=nan ep= 19   5.0s
+  fold 25 KI16  (inner_race real      ) acc=0.9822 F1=0.3303 rec=1.0000 val=nan ep= 19   5.0s
+  fold 26 KI17  (inner_race real      ) acc=0.8694 F1=0.3100 rec=0.9875 val=nan ep= 19   5.0s
+  fold 27 KI18  (inner_race real      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19   5.0s
+  fold 28 KI21  (inner_race real      ) acc=0.8835 F1=0.3127 rec=1.0000 val=nan ep= 19   5.0s
+
+  -> base: window 0.7985  F1 0.7885  recording 0.8422  [2.5 min]
+
+======================================================================
+  RECIPE weak_aug
+  train={}
+  aug={'order_jitter_bins': 3, 'amplitude_scale': 0.15, 'channel_dropout': 0.0, 'noise_std': 0.02, 'prob': 0.5}
+======================================================================
+  device: cuda  cache resident: 165.1 MB
+  epochs=20 early_stop=False seeds=1 tta=(0,)
+  fold  0 K001  (healthy    none      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19   4.9s
+  fold  1 K002  (healthy    none      ) acc=0.0107 F1=0.0071 rec=0.0000 val=nan ep= 19   4.9s
+  fold  2 K003  (healthy    none      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19   4.9s
+  fold  3 K004  (healthy    none      ) acc=0.9679 F1=0.3279 rec=1.0000 val=nan ep= 19   4.9s
+  fold  4 K005  (healthy    none      ) acc=0.8518 F1=0.3067 rec=0.9875 val=nan ep= 19   4.9s
+  fold  5 K006  (healthy    none      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19   4.9s
+  fold  6 KA01  (outer_race artificial) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19   4.9s
+  fold  7 KA03  (outer_race artificial) acc=0.3661 F1=0.1786 rec=0.3000 val=nan ep= 19   4.9s
+  fold  8 KA04  (outer_race real      ) acc=0.9439 F1=0.3237 rec=0.9873 val=nan ep= 19   4.9s
+  fold  9 KA05  (outer_race artificial) acc=0.8229 F1=0.3009 rec=0.9125 val=nan ep= 19   4.8s
+  fold 10 KA06  (outer_race artificial) acc=0.9821 F1=0.3303 rec=1.0000 val=nan ep= 19   4.8s
+  fold 11 KA07  (outer_race artificial) acc=0.8500 F1=0.3063 rec=0.9125 val=nan ep= 19   4.7s
+  fold 12 KA08  (outer_race artificial) acc=0.9638 F1=0.3272 rec=1.0000 val=nan ep= 19   4.7s
+  fold 13 KA09  (outer_race artificial) acc=0.9928 F1=0.3321 rec=1.0000 val=nan ep= 19   4.7s
+  fold 14 KA15  (outer_race real      ) acc=0.8011 F1=0.2965 rec=0.9625 val=nan ep= 19   4.8s
+  fold 15 KA16  (outer_race real      ) acc=0.9643 F1=0.3273 rec=0.9875 val=nan ep= 19   4.7s
+  fold 16 KA22  (outer_race real      ) acc=0.2208 F1=0.1206 rec=0.0875 val=nan ep= 19   4.7s
+  fold 17 KA30  (outer_race real      ) acc=0.1429 F1=0.0833 rec=0.0125 val=nan ep= 19   5.1s
+  fold 18 KI01  (inner_race artificial) acc=0.9036 F1=0.3164 rec=0.9875 val=nan ep= 19   4.9s
+  fold 19 KI03  (inner_race artificial) acc=0.4536 F1=0.2080 rec=0.3875 val=nan ep= 19   4.9s
+  fold 20 KI04  (inner_race real      ) acc=0.8375 F1=0.3039 rec=0.7750 val=nan ep= 19   4.9s
+  fold 21 KI05  (inner_race artificial) acc=0.0036 F1=0.0024 rec=0.0000 val=nan ep= 19   4.9s
+  fold 22 KI07  (inner_race artificial) acc=0.7674 F1=0.2895 rec=0.9375 val=nan ep= 19   4.9s
+  fold 23 KI08  (inner_race artificial) acc=0.9749 F1=0.3291 rec=0.9875 val=nan ep= 19   5.0s
+  fold 24 KI14  (inner_race real      ) acc=0.8235 F1=0.3011 rec=0.8824 val=nan ep= 19   4.8s
+  fold 25 KI16  (inner_race real      ) acc=0.9893 F1=0.3315 rec=1.0000 val=nan ep= 19   4.7s
+  fold 26 KI17  (inner_race real      ) acc=0.6404 F1=0.2603 rec=0.5375 val=nan ep= 19   4.9s
+  fold 27 KI18  (inner_race real      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19   4.9s
+  fold 28 KI21  (inner_race real      ) acc=0.8100 F1=0.2983 rec=0.9500 val=nan ep= 19   5.0s
+
+  -> weak_aug: window 0.7611  F1 0.7554  recording 0.7784  [2.4 min]
+
+
+==============================================================================
+  recipe                   window  macroF1  recording   per-bearing    min
+  --------------------------------------------------------------------------
+  base                     0.7985   0.7885     0.8422   0.799+-0.285    2.5
+  weak_aug                 0.7611   0.7554     0.7784   0.762+-0.315    2.4
+  baseline               0.4153

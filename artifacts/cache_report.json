@@ -1,0 +1,19 @@
+{
+  "windows": 16127,
+  "recordings_ok": 2306,
+  "failures": [],
+  "shape": [
+    16127,
+    5,
+    512
+  ],
+  "mb": 165.1,
+  "seconds": 182.6,
+  "speed_err_median_pct": 0.02214329211080919,
+  "speed_err_p99_pct": 0.208486658280119,
+  "class_counts": {
+    "outer_race": 6697,
+    "inner_race": 6070,
+    "healthy": 3360
+  }
+}

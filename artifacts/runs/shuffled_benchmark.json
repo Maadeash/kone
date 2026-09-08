@@ -1,0 +1,59 @@
+{
+  "protocol": "stratified 5-fold over windows (random split)",
+  "note": "Windows from the same recording and bearing appear in both train and test. Comparable to published Paderborn figures; measures accuracy on bearings already seen, not on a new one.",
+  "feature_set": "v2",
+  "accuracy": 0.9865443045823774,
+  "accuracy_per_fold": [
+    0.9861,
+    0.9848,
+    0.9888,
+    0.9891,
+    0.9839
+  ],
+  "accuracy_std": 0.0023664903199626434,
+  "macro_f1": 0.984711827470233,
+  "majority_baseline": 0.4152663235567682,
+  "per_class": {
+    "healthy": {
+      "precision": 0.9605073508215624,
+      "recall": 0.9916666666666667,
+      "f1": 0.9758383365060771,
+      "support": 3360
+    },
+    "inner_race": {
+      "precision": 0.9893368877040987,
+      "recall": 0.9782537067545305,
+      "f1": 0.983764082173625,
+      "support": 6070
+    },
+    "outer_race": {
+      "precision": 0.9975961538461539,
+      "recall": 0.9914887262953561,
+      "f1": 0.9945330637309968,
+      "support": 6697
+    }
+  },
+  "confusion": [
+    [
+      3332,
+      23,
+      5
+    ],
+    [
+      121,
+      5938,
+      11
+    ],
+    [
+      16,
+      41,
+      6640
+    ]
+  ],
+  "labels": [
+    "healthy",
+    "inner_race",
+    "outer_race"
+  ],
+  "n_windows": 16127
+}

@@ -1,0 +1,33 @@
+  cache      : (16127, 5, 512)
+  calibration: 4,096 windows
+  verification: 2,048 windows (disjoint)
+
+  weights    : 27,024 int8  + 179 int32 biases
+  accumulator headroom:
+    conv1    45 terms  peak      733,804  21 bits  int32 ok: True
+    conv2   112 terms  peak    1,841,594  22 bits  int32 ok: True
+    conv3   160 terms  peak    2,636,875  23 bits  int32 ok: True
+    conv4   192 terms  peak    3,151,891  23 bits  int32 ok: True
+    fc       64 terms  peak    1,041,698  21 bits  int32 ok: True
+
+  INT8 vs float argmax agreement : 99.90 % (n=2,048)   [methodology bar: >= 98 %]
+  max |logit| difference         : 4.0409
+  accuracy on the same windows   : float 99.41 %  int8 99.32 %
+
+  wrote D:\kone\artifacts\int8_export
+    __pycache__                      0 B
+    golden_reference.py          4,937 B
+    input_norm.json                356 B
+    layer_0_W.mem                2,880 B
+    layer_0_b.mem                  160 B
+    layer_1_W.mem               14,336 B
+    layer_1_b.mem                  320 B
+    layer_2_W.mem               40,960 B
+    layer_2_b.mem                  640 B
+    layer_3_W.mem               49,152 B
+    layer_3_b.mem                  640 B
+    layer_4_W.mem                  768 B
+    layer_4_b.mem                   30 B
+    scales.json                  9,236 B
+    verification.json              931 B
+    verification_full.json         595 B

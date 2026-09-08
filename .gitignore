@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 21 GB of Paderborn recordings -- fetch separately
+data/
+
+# Regenerable: rebuild with scripts/01..05
+artifacts/order_spectra_*.npz
+artifacts/order_spectra_*_meta.parquet
+artifacts/runs/*.pt
+artifacts/runs/*.npz
+
+# Kept as evidence but large and not reproducible here; see its README
+docs/prior_results/v4_caches_other_machine/

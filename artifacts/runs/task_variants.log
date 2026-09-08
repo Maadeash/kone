@@ -1,0 +1,53 @@
+  cache (16127, 2, 512) | feature set v1 | cfg epochs=20 seeds=3 tta=(-3, 0, 3)
+
+======================================================================
+  BINARY: healthy vs damaged, leave-one-bearing-out
+======================================================================
+  device: cuda  cache resident: 66.1 MB
+  epochs=20 early_stop=False seeds=3 tta=(-3, 0, 3)
+  fold  0 K001  (healthy    none      ) acc=1.0000 F1=0.5000 rec=1.0000 val=0.678 ep=  3  13.4s
+  fold  1 K002  (healthy    none      ) acc=0.0018 F1=0.0018 rec=0.0000 val=0.852 ep=  8  11.0s
+  fold  2 K003  (healthy    none      ) acc=1.0000 F1=0.5000 rec=1.0000 val=0.838 ep= 12  11.1s
+  fold  3 K004  (healthy    none      ) acc=0.0000 F1=0.0000 rec=0.0000 val=0.744 ep= 10  11.1s
+  fold  4 K005  (healthy    none      ) acc=0.0000 F1=0.0000 rec=0.0000 val=0.743 ep= 10  11.1s
+  fold  5 K006  (healthy    none      ) acc=0.9321 F1=0.4824 rec=0.9500 val=0.828 ep=  8  11.1s
+  fold  6 KA01  (outer_race artificial) acc=0.6530 F1=0.3950 rec=0.6500 val=0.858 ep= 15  11.3s
+  fold  7 KA03  (outer_race artificial) acc=0.9446 F1=0.4858 rec=1.0000 val=0.834 ep=  7  11.3s
+  fold  8 KA04  (outer_race real      ) acc=0.9910 F1=0.4977 rec=0.9873 val=0.823 ep=  8  11.2s
+  fold  9 KA05  (outer_race artificial) acc=0.8927 F1=0.4716 rec=1.0000 val=0.833 ep= 10  11.2s
+  fold 10 KA06  (outer_race artificial) acc=0.9857 F1=0.4964 rec=1.0000 val=0.836 ep=  8  11.2s
+  fold 11 KA07  (outer_race artificial) acc=0.9429 F1=0.4853 rec=0.9875 val=0.832 ep=  9  11.1s
+  fold 12 KA08  (outer_race artificial) acc=0.8424 F1=0.4572 rec=0.7975 val=0.837 ep= 10  11.1s
+  fold 13 KA09  (outer_race artificial) acc=0.8515 F1=0.4599 rec=0.9000 val=0.836 ep=  9  11.1s
+  fold 14 KA15  (outer_race real      ) acc=0.7491 F1=0.4283 rec=0.8625 val=0.852 ep=  9  11.2s
+  fold 15 KA16  (outer_race real      ) acc=1.0000 F1=0.5000 rec=1.0000 val=0.850 ep=  8  11.2s
+  fold 16 KA22  (outer_race real      ) acc=0.8294 F1=0.4534 rec=0.9750 val=0.836 ep=  8  11.2s
+  fold 17 KA30  (outer_race real      ) acc=0.9625 F1=0.4904 rec=1.0000 val=0.837 ep=  7  11.1s
+  fold 18 KI01  (inner_race artificial) acc=1.0000 F1=0.5000 rec=1.0000 val=0.840 ep=  6  11.2s
+  fold 19 KI03  (inner_race artificial) acc=0.9804 F1=0.4950 rec=1.0000 val=0.830 ep=  5  11.1s
+  fold 20 KI04  (inner_race real      ) acc=0.9929 F1=0.4982 rec=1.0000 val=0.838 ep=  6  11.2s
+  fold 21 KI05  (inner_race artificial) acc=0.1234 F1=0.1099 rec=0.0125 val=0.808 ep= 10  11.2s
+  fold 22 KI07  (inner_race artificial) acc=0.5671 F1=0.3619 rec=0.6750 val=0.750 ep=  8  11.2s
+  fold 23 KI08  (inner_race artificial) acc=1.0000 F1=0.5000 rec=1.0000 val=0.713 ep=  9  11.2s
+  fold 24 KI14  (inner_race real      ) acc=0.9391 F1=0.4843 rec=1.0000 val=0.697 ep= 11  11.7s
+  fold 25 KI16  (inner_race real      ) acc=1.0000 F1=0.5000 rec=1.0000 val=0.722 ep=  8  11.6s
+  fold 26 KI17  (inner_race real      ) acc=1.0000 F1=0.5000 rec=1.0000 val=0.711 ep=  9  11.3s
+  fold 27 KI18  (inner_race real      ) acc=1.0000 F1=0.5000 rec=1.0000 val=0.700 ep=  7  11.3s
+  fold 28 KI21  (inner_race real      ) acc=0.9910 F1=0.4977 rec=1.0000 val=0.729 ep=  9  11.2s
+
+  -> binary LOBO: window 0.7982  F1 0.6880  recording 0.8196  baseline 0.7917
+     aggregation: {'1': 0.8196551724137932, '2': 0.8368965517241379, '5': 0.8467241379310345, '10': 0.8518965517241379, '20': 0.8570689655172414, '40': 0.8593103448275862}
+
+======================================================================
+  LEAKY REFERENCE: 3-class, windows shuffled across bearings
+  (this is the protocol that produces 99 % in the literature)
+======================================================================
+    shuffled fold 0: acc=0.9129
+    shuffled fold 1: acc=0.9203
+    shuffled fold 2: acc=0.9265
+    shuffled fold 3: acc=0.9175
+    shuffled fold 4: acc=0.9147
+
+  -> shuffled 3-class: window 0.9184  F1 0.9131   <-- NOT a generalisation estimate
+
+  wrote D:\kone\artifacts\runs\task_variants.json

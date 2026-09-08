@@ -1,0 +1,15 @@
+  cache      : (16127, 5, 512)
+  golden ref : D:\kone\artifacts\int8_export
+    0/16,127
+    8,192/16,127
+
+  windows            : 16,127
+  argmax agreement   : 99.882 %   [methodology bar: >= 98 %]  -> PASS
+  disagreements      : 19
+  accuracy (in-sample, deployment model trained on all bearings):
+    float 99.27 %   int8 99.20 %
+  disagreements by bearing: {'KA03': 3, 'KA04': 3, 'KI05': 3, 'KA30': 3, 'KI07': 2, 'K002': 1, 'KA22': 1, 'KA16': 1, 'KA05': 1, 'KI03': 1}
+
+  NOTE: the accuracy above is IN-SAMPLE and is not a generalisation
+        estimate. The honest number is in runs/lobo_summary.json.
+  wrote D:\kone\artifacts\int8_export\verification_full.json

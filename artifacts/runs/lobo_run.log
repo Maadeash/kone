@@ -1,0 +1,71 @@
+  cache: (16127, 5, 512) | 29 bearings | 2,306 recordings
+  folds: 29 leave-one-bearing-out, verified no overlap
+OrderSpectrumCNN  27,555 params  1,691,840 MAC/inference
+  conv1    5 ->  16  k=9 s=2  out_len=256
+  conv2   16 ->  32  k=7 s=2  out_len=128
+  conv3   32 ->  64  k=5 s=2  out_len=64
+  conv4   64 ->  64  k=3 s=2  out_len=32
+  gap    64
+  fc     64 -> 3
+  device: cuda  cache resident: 165.1 MB
+  epochs=20 early_stop=False seeds=1 tta=(0,)
+  fold  0 K001  (healthy    none      ) acc=0.9982 F1=0.3330 rec=1.0000 val=nan ep= 19   7.5s
+  fold  1 K002  (healthy    none      ) acc=0.0625 F1=0.0392 rec=0.0000 val=nan ep= 19   5.0s
+  fold  2 K003  (healthy    none      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19   5.0s
+  fold  3 K004  (healthy    none      ) acc=0.9214 F1=0.3197 rec=1.0000 val=nan ep= 19   5.0s
+  fold  4 K005  (healthy    none      ) acc=0.7661 F1=0.2892 rec=0.9500 val=nan ep= 19   5.0s
+  fold  5 K006  (healthy    none      ) acc=0.9982 F1=0.3330 rec=1.0000 val=nan ep= 19   5.0s
+  fold  6 KA01  (outer_race artificial) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19   5.0s
+  fold  7 KA03  (outer_race artificial) acc=0.5696 F1=0.2419 rec=0.4750 val=nan ep= 19   5.0s
+  fold  8 KA04  (outer_race real      ) acc=0.9693 F1=0.3281 rec=0.9873 val=nan ep= 19   5.0s
+  fold  9 KA05  (outer_race artificial) acc=0.8748 F1=0.3111 rec=0.9875 val=nan ep= 19   5.0s
+  fold 10 KA06  (outer_race artificial) acc=0.9857 F1=0.3309 rec=1.0000 val=nan ep= 19   5.0s
+  fold 11 KA07  (outer_race artificial) acc=0.8714 F1=0.3104 rec=0.9500 val=nan ep= 19   5.0s
+  fold 12 KA08  (outer_race artificial) acc=0.9094 F1=0.3175 rec=1.0000 val=nan ep= 19   5.0s
+  fold 13 KA09  (outer_race artificial) acc=0.9946 F1=0.3324 rec=1.0000 val=nan ep= 19   4.9s
+  fold 14 KA15  (outer_race real      ) acc=0.8262 F1=0.3016 rec=0.9750 val=nan ep= 19   5.0s
+  fold 15 KA16  (outer_race real      ) acc=0.9589 F1=0.3263 rec=1.0000 val=nan ep= 19   5.0s
+  fold 16 KA22  (outer_race real      ) acc=0.3537 F1=0.1742 rec=0.4375 val=nan ep= 19   5.0s
+  fold 17 KA30  (outer_race real      ) acc=0.2411 F1=0.1295 rec=0.1000 val=nan ep= 19   5.0s
+  fold 18 KI01  (inner_race artificial) acc=0.9982 F1=0.3330 rec=1.0000 val=nan ep= 19   5.0s
+  fold 19 KI03  (inner_race artificial) acc=0.5946 F1=0.2486 rec=0.7375 val=nan ep= 19   5.0s
+  fold 20 KI04  (inner_race real      ) acc=0.9000 F1=0.3158 rec=0.9375 val=nan ep= 19   5.0s
+  fold 21 KI05  (inner_race artificial) acc=0.0072 F1=0.0047 rec=0.0000 val=nan ep= 19   5.1s
+  fold 22 KI07  (inner_race artificial) acc=0.7549 F1=0.2868 rec=0.8375 val=nan ep= 19   5.1s
+  fold 23 KI08  (inner_race artificial) acc=0.9785 F1=0.3297 rec=0.9875 val=nan ep= 19   5.1s
+  fold 24 KI14  (inner_race real      ) acc=0.8655 F1=0.3093 rec=1.0000 val=nan ep= 19   5.1s
+  fold 25 KI16  (inner_race real      ) acc=0.9822 F1=0.3303 rec=1.0000 val=nan ep= 19   5.0s
+  fold 26 KI17  (inner_race real      ) acc=0.8730 F1=0.3107 rec=0.9750 val=nan ep= 19   5.0s
+  fold 27 KI18  (inner_race real      ) acc=1.0000 F1=0.3333 rec=1.0000 val=nan ep= 19   5.0s
+  fold 28 KI21  (inner_race real      ) acc=0.8943 F1=0.3147 rec=1.0000 val=nan ep= 19   5.0s
+
+  === LEAVE-ONE-BEARING-OUT, POOLED (29 folds) ===
+  window accuracy    0.7979   (16,127 windows)
+  macro F1           0.7876
+  per-recording acc  0.8382   (2,306 recordings)
+  majority baseline  0.4153
+  per-bearing acc    0.7983 +/- 0.2852  (SEM 0.0530, n=29 bearings)
+
+  confusion (rows = true, cols = predicted):
+                  healthy   inner_race   outer_race
+    healthy         2,658          550          152
+  inner_race           764        4,878          428
+  outer_race           558          808        5,331
+
+  by damage origin (healthy joins both as the reference class):
+    real        acc=0.8000  F1=0.7952  base=0.3566  (17 bearings)
+    artificial  acc=0.7935  F1=0.7818  base=0.3884  (18 bearings)
+
+  hardest bearings:
+    KI05  inner_race  artificial acc=0.0072
+    K002  healthy     none       acc=0.0625
+    KA30  outer_race  real       acc=0.2411
+    KA22  outer_race  real       acc=0.3537
+    KA03  outer_race  artificial acc=0.5696
+    KI03  inner_race  artificial acc=0.5946
+
+  wrote D:\kone\artifacts\runs\lobo_summary.json  (2.5 min)
+
+  training deployment model on ALL bearings (no holdout)...
+  val_acc nan on held-out bearings []
+  wrote D:\kone\artifacts\runs\deployment_model.pt

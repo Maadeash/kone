@@ -1,0 +1,77 @@
+{
+  "n_repeats": 3,
+  "train_config": {
+    "epochs": 20,
+    "batch_size": 1024,
+    "lr": 0.003,
+    "weight_decay": 0.0001,
+    "label_smoothing": 0.05,
+    "val_bearings_per_class": 0,
+    "augment": true,
+    "early_stop": false,
+    "patience": 20,
+    "n_seeds": 3,
+    "tta_shifts": [
+      -3,
+      0,
+      3
+    ]
+  },
+  "augment_config": {
+    "order_jitter_bins": 4,
+    "amplitude_scale": 0.25,
+    "channel_dropout": 0.15,
+    "noise_std": 0.05,
+    "prob": 0.8
+  },
+  "feature_set": "v1",
+  "runs": [
+    {
+      "base_seed": 42,
+      "window_acc": 0.783840763936256,
+      "macro_f1": 0.7668542933385071,
+      "recording_acc": 0.8126626192541196,
+      "n_windows": 16127,
+      "n_recordings": 2306,
+      "majority_baseline": 0.4152663235567682
+    },
+    {
+      "base_seed": 7961,
+      "window_acc": 0.7826626154895517,
+      "macro_f1": 0.7656036080219004,
+      "recording_acc": 0.8148308759757156,
+      "n_windows": 16127,
+      "n_recordings": 2306,
+      "majority_baseline": 0.4152663235567682
+    },
+    {
+      "base_seed": 15880,
+      "window_acc": 0.7803063185961431,
+      "macro_f1": 0.7629779944246913,
+      "recording_acc": 0.8091934084995663,
+      "n_windows": 16127,
+      "n_recordings": 2306,
+      "majority_baseline": 0.4152663235567682
+    }
+  ],
+  "summary": {
+    "window_acc": {
+      "mean": 0.7822698993406503,
+      "std": 0.0017996514789723889,
+      "min": 0.7803063185961431,
+      "max": 0.783840763936256
+    },
+    "macro_f1": {
+      "mean": 0.765145298595033,
+      "std": 0.001978372807480708,
+      "min": 0.7629779944246913,
+      "max": 0.7668542933385071
+    },
+    "recording_acc": {
+      "mean": 0.8122289679098005,
+      "std": 0.002843642031353886,
+      "min": 0.8091934084995663,
+      "max": 0.8148308759757156
+    }
+  }
+}

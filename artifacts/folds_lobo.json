@@ -1,0 +1,240 @@
+{
+  "scheme": "leave-one-bearing-out",
+  "n_folds": 29,
+  "bearings": [
+    "K001",
+    "K002",
+    "K003",
+    "K004",
+    "K005",
+    "K006",
+    "KA01",
+    "KA03",
+    "KA04",
+    "KA05",
+    "KA06",
+    "KA07",
+    "KA08",
+    "KA09",
+    "KA15",
+    "KA16",
+    "KA22",
+    "KA30",
+    "KI01",
+    "KI03",
+    "KI04",
+    "KI05",
+    "KI07",
+    "KI08",
+    "KI14",
+    "KI16",
+    "KI17",
+    "KI18",
+    "KI21"
+  ],
+  "folds": [
+    {
+      "fold": 0,
+      "test_bearings": [
+        "K001"
+      ],
+      "test_label": "healthy"
+    },
+    {
+      "fold": 1,
+      "test_bearings": [
+        "K002"
+      ],
+      "test_label": "healthy"
+    },
+    {
+      "fold": 2,
+      "test_bearings": [
+        "K003"
+      ],
+      "test_label": "healthy"
+    },
+    {
+      "fold": 3,
+      "test_bearings": [
+        "K004"
+      ],
+      "test_label": "healthy"
+    },
+    {
+      "fold": 4,
+      "test_bearings": [
+        "K005"
+      ],
+      "test_label": "healthy"
+    },
+    {
+      "fold": 5,
+      "test_bearings": [
+        "K006"
+      ],
+      "test_label": "healthy"
+    },
+    {
+      "fold": 6,
+      "test_bearings": [
+        "KA01"
+      ],
+      "test_label": "outer_race"
+    },
+    {
+      "fold": 7,
+      "test_bearings": [
+        "KA03"
+      ],
+      "test_label": "outer_race"
+    },
+    {
+      "fold": 8,
+      "test_bearings": [
+        "KA04"
+      ],
+      "test_label": "outer_race"
+    },
+    {
+      "fold": 9,
+      "test_bearings": [
+        "KA05"
+      ],
+      "test_label": "outer_race"
+    },
+    {
+      "fold": 10,
+      "test_bearings": [
+        "KA06"
+      ],
+      "test_label": "outer_race"
+    },
+    {
+      "fold": 11,
+      "test_bearings": [
+        "KA07"
+      ],
+      "test_label": "outer_race"
+    },
+    {
+      "fold": 12,
+      "test_bearings": [
+        "KA08"
+      ],
+      "test_label": "outer_race"
+    },
+    {
+      "fold": 13,
+      "test_bearings": [
+        "KA09"
+      ],
+      "test_label": "outer_race"
+    },
+    {
+      "fold": 14,
+      "test_bearings": [
+        "KA15"
+      ],
+      "test_label": "outer_race"
+    },
+    {
+      "fold": 15,
+      "test_bearings": [
+        "KA16"
+      ],
+      "test_label": "outer_race"
+    },
+    {
+      "fold": 16,
+      "test_bearings": [
+        "KA22"
+      ],
+      "test_label": "outer_race"
+    },
+    {
+      "fold": 17,
+      "test_bearings": [
+        "KA30"
+      ],
+      "test_label": "outer_race"
+    },
+    {
+      "fold": 18,
+      "test_bearings": [
+        "KI01"
+      ],
+      "test_label": "inner_race"
+    },
+    {
+      "fold": 19,
+      "test_bearings": [
+        "KI03"
+      ],
+      "test_label": "inner_race"
+    },
+    {
+      "fold": 20,
+      "test_bearings": [
+        "KI04"
+      ],
+      "test_label": "inner_race"
+    },
+    {
+      "fold": 21,
+      "test_bearings": [
+        "KI05"
+      ],
+      "test_label": "inner_race"
+    },
+    {
+      "fold": 22,
+      "test_bearings": [
+        "KI07"
+      ],
+      "test_label": "inner_race"
+    },
+    {
+      "fold": 23,
+      "test_bearings": [
+        "KI08"
+      ],
+      "test_label": "inner_race"
+    },
+    {
+      "fold": 24,
+      "test_bearings": [
+        "KI14"
+      ],
+      "test_label": "inner_race"
+    },
+    {
+      "fold": 25,
+      "test_bearings": [
+        "KI16"
+      ],
+      "test_label": "inner_race"
+    },
+    {
+      "fold": 26,
+      "test_bearings": [
+        "KI17"
+      ],
+      "test_label": "inner_race"
+    },
+    {
+      "fold": 27,
+      "test_bearings": [
+        "KI18"
+      ],
+      "test_label": "inner_race"
+    },
+    {
+      "fold": 28,
+      "test_bearings": [
+        "KI21"
+      ],
+      "test_label": "inner_race"
+    }
+  ]
+}
