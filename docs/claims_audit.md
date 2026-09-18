@@ -237,6 +237,67 @@ Consequence for `drivesentinel/fusion.py` and the dashboard: B-S4 may raise `War
 and contribute to the evidence string, but may never raise `Fault` on its own. Its
 waveform and spectrum panels stay live — an indicative branch is displayed, not hidden.
 
+### 1.8 Fusion authority as measured (P4, 2026-09-18)
+
+Which branches may raise `Fault`, and why. **Read from each branch's results JSON at
+load time by `fusion.load_branch_metrics()`, never hardcoded** -- so the table cannot
+drift away from the measured numbers.
+
+Floor: **>= 3 independent validation groups AND honest macro-F1 >= 0.75**,
+pre-registered 2026-09-18T07:19:23Z at commit `7344a436`, before any multi-stage branch existed (1.1).
+**Not adjusted.**
+
+| Branch | Stage | Protocol | Groups | Macro-F1 | Tier |
+|---|---|---|---|---|---|
+| `bearing` | S5 | leave-one-bearing-out | 29 | 0.7852 | **Fault-capable** |
+| `winding` | S4 | V5 (leave-one-session-out) | 2 | 0.6250 | **INDICATIVE** |
+| `supply` | S1 | — | — | — | **NOT MEASURED** |
+| `inverter_telemetry` | S3 | — | — | — | **NOT MEASURED** |
+
+- **`bearing` holds Fault authority.** 29 bearings and macro-F1 0.7852 clear both
+  tests. It is the only branch that can condemn a drive on its own.
+- **`winding` is INDICATIVE and fails both tests** -- 2 scored sessions against 3, and
+  0.6250 against 0.75. It may raise `Warning` and contribute evidence. Its panels stay
+  live; it is capped, not hidden.
+- **`supply` and `inverter_telemetry` are NOT MEASURED** -- no results JSON yet.
+  Absence of a metric earns the same lack of trust as a bad one, so they have no
+  authority either. They are re-read automatically once their branches run.
+
+Asserted in `tests/test_fusion.py`: an INDICATIVE branch held at `p_fault = 0.99` for
+50 consecutive updates reaches `Warning` and stops. If that test ever passes as
+`Fault`, the floor has been defeated.
+
+### 1.9 Trip gating is implemented and disabled
+
+`config.TRIP_CONFIG["enabled"] = False`. No real dataset in the roster has a speed
+ramp:
+
+| Dataset | f_e | Ramps? |
+|---|---|---|
+| D1 Paderborn | 900 / 1500 rpm, constant within each 4 s recording | no |
+| D2 KAIST | 200.00 Hz in all 48 recordings | no |
+| D3 Bacha | 10 rad/s constant, 10 Hz telemetry | no |
+| D4 Thomas | mains-fed, 49.955-50.036 Hz | no |
+
+Segmentation on any of them returns `cruise` for every window, so gating changes
+nothing. Enabling it by default would ship a code path no data exercises and a claim
+nothing tests. **No claim is made anywhere that trip gating gates real data.**
+
+It is unit-tested against synthetic ramps with known ground truth: a trapezoidal
+profile segments into accel/cruise/decel in order, with cruise boundaries within
+0.25 s of truth, and a linear chirp tracks within 2 Hz median error.
+
+The one real-data application is **envelope** segmentation of the D4 start-up
+transients, where f_e is pinned by the grid and the transient lives in the current
+envelope. Reported as segmentation only, never as frequency tracking. Measured cruise
+onsets: FILE 1 at 8.83 s, FILE 6 at 9.17 s -- consistent with the per-2 s RMS blocks
+in `data_notes_d4.md`. For FILE 5 and 10 the machine never rotates, so `cruise` there
+means steady **current**, not steady rotation; stated so the label is not over-read.
+
+The order-resolution table in `docs/results_multistage.md` is **analytic
+extrapolation**, labelled as such per row. It is arithmetic about what a window length
+can resolve, not a claim about detection performance at low speed.
+
 ---
 
 ## 2. Bearing pipeline (S5, frozen)

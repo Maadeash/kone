@@ -358,6 +358,37 @@ QUANT_CONFIG = {
 
 
 # ===========================================================================
+# TRIP GATING
+# ===========================================================================
+#
+# GATING IS OFF BY DEFAULT, AND THAT IS NOT LAZINESS.
+#
+# The point of trip gating is to run order-normalised branches only on cruise
+# windows, because f_e moves during accel and decel and smears an order spectrum.
+# Measured f_e across every real dataset in the roster:
+#
+#     D1 Paderborn   900 rpm (and 1500), constant within each 4 s recording
+#     D2 KAIST       200.00 Hz in all 48 recordings, to 0.25 Hz
+#     D3 Bacha       10 rad/s constant, and 10 Hz telemetry anyway
+#     D4 Thomas      mains-fed, 49.96-50.04 Hz
+#
+# Nothing ramps.  Gating on these datasets would mark every window "cruise" and
+# change no result, so switching it on by default would add a code path that is
+# never exercised and a claim that is never tested.  It is implemented, unit
+# tested against synthetic ramps, and left off until there is a speed profile to
+# gate -- which means the simulator branch (P7/P8, out of the MVP).
+TRIP_CONFIG = {
+    "enabled": False,
+    "stft_window_s": 0.25,       # 4 Hz resolution; fine against f_e of 50-200 Hz
+    "stft_hop_s": 0.05,          # 20 estimates/s -- enough to resolve a 1 s ramp
+    "f_search": (10.0, 500.0),   # covers the roster: 50 Hz mains to 200 Hz PMSM
+    "ridge_smooth": 5,           # median filter taps on the ridge, kills bin flicker
+    "accel_threshold_hz_s": 2.0, # |df_e/dt| above this is a ramp, not cruise
+    "min_segment_s": 0.30,       # shorter runs are noise, not a phase
+    "hilbert_refine": True,
+}
+
+# ===========================================================================
 # FUSION -- the branch confidence floor
 # ===========================================================================
 #

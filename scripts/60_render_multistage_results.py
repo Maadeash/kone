@@ -12,6 +12,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from drivesentinel import config as C
+from drivesentinel import fusion as FU
+from drivesentinel import trip as TR
 
 BRANCHES = [
     ("winding", "B-S4", "S4", "D2 KAIST PMSM"),
@@ -157,6 +159,96 @@ def main():
         lines.append("")
         lines.append("---")
         lines.append("")
+
+    # -- fusion: thresholds and authority, generated from the same JSON ----
+    lines.append("## Fusion")
+    lines.append("")
+    fa = C.FUSION_CONFIG["fault_authority"]
+    lines.append(f"Pre-registered **{fa['fixed_at']}**, commit "
+                 f"`{fa['fixed_at_commit'][:8]}`, before any multi-stage branch "
+                 f"existed. Not adjusted since.")
+    lines.append("")
+    lines.append("### Thresholds")
+    lines.append("")
+    lines.append("| Parameter | Value | Meaning |")
+    lines.append("|---|---|---|")
+    fc = C.FUSION_CONFIG
+    for k, meaning in (
+            ("rolling_window", "windows in the rolling probability mean"),
+            ("tau_fault", "p_fault at or above this counts towards Fault"),
+            ("tau_warning", "p_fault at or above this counts towards Warning"),
+            ("hysteresis", "clearing needs p_fault below tau_warning minus this"),
+            ("k_consecutive", "consecutive updates required to change status")):
+        lines.append(f"| `{k}` | {fc[k]} | {meaning} |")
+    lines.append(f"| `min_validation_groups` | {fa['min_validation_groups']} "
+                 f"| independent validation groups required for Fault authority |")
+    lines.append(f"| `min_macro_f1` | {fa['min_macro_f1']} "
+                 f"| honest macro-F1 required for Fault authority |")
+    lines.append("")
+    lines.append("Raising takes `k_consecutive` updates; clearing takes roughly")
+    lines.append("`rolling_window + k_consecutive`, because `p_fault` is a rolling mean")
+    lines.append("and the high samples must flush out first. The asymmetry is deliberate.")
+    lines.append("")
+    lines.append("### Branch authority")
+    lines.append("")
+    lines.append("Read from each branch's results JSON at load time, never hardcoded.")
+    lines.append("")
+    lines.append("| Branch | Stage | Protocol | Groups | Macro-F1 | Groups ≥ "
+                 f"{fa['min_validation_groups']} | F1 ≥ {fa['min_macro_f1']} | Tier |")
+    lines.append("|---|---|---|---|---|---|---|---|")
+    tick = {True: "yes", False: "**no**", None: "—"}
+    for r in FU.authority_table(FU.load_branch_metrics()):
+        f1 = "—" if r["macro_f1"] is None else f"{r['macro_f1']:.4f}"
+        lines.append(f"| `{r['branch']}` | {r['stage']} | {r['protocol'] or '—'} "
+                     f"| {r['n_validation_groups'] if r['n_validation_groups'] is not None else '—'} "
+                     f"| {f1} | {tick[r['groups_test']]} | {tick[r['metric_test']]} "
+                     f"| **{r['tier']}** |")
+    lines.append("")
+    lines.append("An **INDICATIVE** branch may raise `Warning` and contribute to the")
+    lines.append("evidence string, but never `Fault`, however confident it is. Its")
+    lines.append("waveform and spectrum panels stay live — capped, not hidden.")
+    lines.append("A **NOT MEASURED** branch has no authority at all.")
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+    lines.append("## Trip gating")
+    lines.append("")
+    lines.append(f"**Gating is `enabled: {C.TRIP_CONFIG['enabled']}`.** No real dataset in")
+    lines.append("the roster has a speed ramp — Paderborn is fixed at 900/1500 rpm, KAIST")
+    lines.append("at 200.00 Hz, Bacha at 10 rad/s, Thomas mains-fed at 49.96–50.04 Hz.")
+    lines.append("Segmentation on any of them returns `cruise` for every window, so gating")
+    lines.append("would change nothing. It is implemented and unit-tested against synthetic")
+    lines.append("ramps with known ground truth, and left off until there is a speed profile")
+    lines.append("to gate. **No claim is made that it gates anything on real data.**")
+    lines.append("")
+    lines.append("### Order resolution vs shaft speed")
+    lines.append("")
+    lines.append("Analytic, not measured. `delta_order = 60 / (T * rpm)`.")
+    lines.append("")
+    lines.append("| Shaft rpm | f_shaft (Hz) | revs/window | Order resolution | Source |")
+    lines.append("|---|---|---|---|---|")
+    for r in TR.resolution_table():
+        src = ("Paderborn, **measured**" if r["shaft_rpm"] in (900.0, 1500.0)
+               else "**extrapolation**" + (" — gearless sheave range"
+                                           if r["shaft_rpm"] <= 50 else ""))
+        lines.append(f"| {r['shaft_rpm']:.0f} | {r['f_shaft_hz']:.2f} "
+                     f"| {r['shaft_revs_in_window']:.2f} "
+                     f"| {r['order_resolution']:.4f} | {src} |")
+    gap = C.FAULT_ORDERS_NOMINAL["bpfi"] - C.FAULT_ORDERS_NOMINAL["bpfo"]
+    lines.append("")
+    lines.append(f"BPFO ({C.FAULT_ORDERS_NOMINAL['bpfo']:.2f}) and BPFI "
+                 f"({C.FAULT_ORDERS_NOMINAL['bpfi']:.2f}) are **{gap:.2f} orders** apart.")
+    lines.append(f"At 900 rpm a {C.WINDOW_SECONDS:g} s window resolves "
+                 f"{TR.order_resolution(900.0)['order_resolution']:.4f} orders — ample.")
+    lines.append(f"At 20 rpm it resolves "
+                 f"{TR.order_resolution(20.0)['order_resolution']:.2f} orders, wider than")
+    lines.append("the gap, so the two lines merge. The fix is a longer window, not a")
+    lines.append("cleverer algorithm: resolution is 1/T, and holding 0.067 orders at 20 rpm")
+    lines.append("needs a 45 s window — longer than many elevator trips. That trade is the")
+    lines.append("real constraint on porting this to a sheave, and it is arithmetic.")
+    lines.append("")
+    lines.append("---")
+    lines.append("")
 
     with open(OUT, "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines))

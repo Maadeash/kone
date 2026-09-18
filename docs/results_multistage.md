@@ -93,3 +93,75 @@ _Source: `artifacts\multistage\winding\winding_results.json`, 112.8 s._
 ## B-S2/S3 `inverter_telemetry` — stage S2/S3, D3 Bacha
 
 **NOT RUN**
+
+## Fusion
+
+Pre-registered **2026-09-18T07:19:23Z**, commit `7344a436`, before any multi-stage branch existed. Not adjusted since.
+
+### Thresholds
+
+| Parameter | Value | Meaning |
+|---|---|---|
+| `rolling_window` | 10 | windows in the rolling probability mean |
+| `tau_fault` | 0.7 | p_fault at or above this counts towards Fault |
+| `tau_warning` | 0.45 | p_fault at or above this counts towards Warning |
+| `hysteresis` | 0.1 | clearing needs p_fault below tau_warning minus this |
+| `k_consecutive` | 3 | consecutive updates required to change status |
+| `min_validation_groups` | 3 | independent validation groups required for Fault authority |
+| `min_macro_f1` | 0.75 | honest macro-F1 required for Fault authority |
+
+Raising takes `k_consecutive` updates; clearing takes roughly
+`rolling_window + k_consecutive`, because `p_fault` is a rolling mean
+and the high samples must flush out first. The asymmetry is deliberate.
+
+### Branch authority
+
+Read from each branch's results JSON at load time, never hardcoded.
+
+| Branch | Stage | Protocol | Groups | Macro-F1 | Groups ≥ 3 | F1 ≥ 0.75 | Tier |
+|---|---|---|---|---|---|---|---|
+| `bearing` | S5 | leave-one-bearing-out | 29 | 0.7852 | yes | yes | **Fault-capable** |
+| `winding` | S4 | V5 (leave-one-session-out) | 2 | 0.6250 | **no** | **no** | **INDICATIVE** |
+| `supply` | S1 | — | — | — | — | — | **NOT MEASURED** |
+| `inverter_telemetry` | S3 | — | — | — | — | — | **NOT MEASURED** |
+
+An **INDICATIVE** branch may raise `Warning` and contribute to the
+evidence string, but never `Fault`, however confident it is. Its
+waveform and spectrum panels stay live — capped, not hidden.
+A **NOT MEASURED** branch has no authority at all.
+
+---
+
+## Trip gating
+
+**Gating is `enabled: False`.** No real dataset in
+the roster has a speed ramp — Paderborn is fixed at 900/1500 rpm, KAIST
+at 200.00 Hz, Bacha at 10 rad/s, Thomas mains-fed at 49.96–50.04 Hz.
+Segmentation on any of them returns `cruise` for every window, so gating
+would change nothing. It is implemented and unit-tested against synthetic
+ramps with known ground truth, and left off until there is a speed profile
+to gate. **No claim is made that it gates anything on real data.**
+
+### Order resolution vs shaft speed
+
+Analytic, not measured. `delta_order = 60 / (T * rpm)`.
+
+| Shaft rpm | f_shaft (Hz) | revs/window | Order resolution | Source |
+|---|---|---|---|---|
+| 900 | 15.00 | 15.00 | 0.0667 | Paderborn, **measured** |
+| 1500 | 25.00 | 25.00 | 0.0400 | Paderborn, **measured** |
+| 300 | 5.00 | 5.00 | 0.2000 | **extrapolation** |
+| 100 | 1.67 | 1.67 | 0.6000 | **extrapolation** |
+| 50 | 0.83 | 0.83 | 1.2000 | **extrapolation** — gearless sheave range |
+| 20 | 0.33 | 0.33 | 3.0000 | **extrapolation** — gearless sheave range |
+| 10 | 0.17 | 0.17 | 6.0000 | **extrapolation** — gearless sheave range |
+
+BPFO (3.05) and BPFI (4.95) are **1.89 orders** apart.
+At 900 rpm a 1 s window resolves 0.0667 orders — ample.
+At 20 rpm it resolves 3.00 orders, wider than
+the gap, so the two lines merge. The fix is a longer window, not a
+cleverer algorithm: resolution is 1/T, and holding 0.067 orders at 20 rpm
+needs a 45 s window — longer than many elevator trips. That trade is the
+real constraint on porting this to a sheave, and it is arithmetic.
+
+---
