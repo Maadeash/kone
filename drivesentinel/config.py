@@ -357,6 +357,65 @@ QUANT_CONFIG = {
 }
 
 
+# ===========================================================================
+# FUSION -- the branch confidence floor
+# ===========================================================================
+#
+# PRE-REGISTERED 2026-09-18T07:19:23Z, at commit 7344a436, when NO multi-stage
+# branch had been implemented let alone trained.  See docs/claims_audit.md §1.1
+# and docs/workflow_v2.md §13.6.
+#
+# The point of fixing this before any branch runs is that a floor chosen after
+# seeing the numbers is the same mistake as tuning on test: whatever the branches
+# score, the floor would end up drawn just below them.  So it is drawn now, from
+# what the datasets can support, and it does not move.
+#
+# min_validation_groups = 3 because a group split with two groups cannot
+# distinguish "generalises across machines" from "these two recordings differ".
+# D4 has 2 motors and D3 has one run per condition; both fail this deliberately.
+#
+# min_macro_f1 = 0.75 sits just under the frozen bearing branch's honest 0.7944,
+# which is the only branch with a measured honest number at the time of writing.
+# It is a statement that a branch must be at least as trustworthy as the one
+# thing already known to work before it may condemn a drive on its own.
+FUSION_CONFIG = {
+    "fault_authority": {
+        "min_validation_groups": 3,
+        "min_macro_f1": 0.75,
+        # Recorded so that any later edit is visible in the diff AND in the
+        # artefacts, not just in git history.
+        "fixed_at": "2026-09-18T07:19:23Z",
+        "fixed_at_commit": "7344a436b724a08058ca6496d9d1d5936e17226b",
+    },
+
+    # A branch that fails EITHER test above is "indicative": it may raise
+    # Warning and contribute to the evidence string, but never Fault.
+    "indicative_max_status": "Warning",
+
+    # Evidence accumulation (workflow §7).
+    "rolling_window": 10,        # N gated windows in the rolling softmax mean
+    "tau_fault": 0.70,           # p_fault threshold for Fault
+    "tau_warning": 0.45,         # p_fault threshold for Warning
+    "hysteresis": 0.10,          # clear below tau_warning - h
+    "k_consecutive": 3,          # updates required to cross or clear
+}
+
+
+def fault_authority(n_validation_groups: int, macro_f1: float) -> bool:
+    """
+    May this branch raise Fault on its own?
+
+    Both tests must pass.  Called by fusion.py and by the dashboard metric
+    cards, so that the tier shown to a user and the tier used in aggregation
+    can never disagree.
+    """
+    cfg = FUSION_CONFIG["fault_authority"]
+    if macro_f1 is None or n_validation_groups is None:
+        return False
+    return (n_validation_groups >= cfg["min_validation_groups"]
+            and macro_f1 >= cfg["min_macro_f1"])
+
+
 def ensure_dirs() -> None:
     for d in (ARTIFACT_DIR, RUN_DIR, EXPORT_DIR):
         os.makedirs(d, exist_ok=True)

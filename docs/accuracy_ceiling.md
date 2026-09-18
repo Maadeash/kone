@@ -16,8 +16,20 @@ the *reason* is more useful than the number.
 | Majority baseline | 0.4153 | — |
 
 Leave-one-bearing-out over all 29 bearings, pooled. Single model — no ensemble,
-no test-time augmentation — so the exported INT8 weights are the model these
-numbers describe.
+no test-time augmentation (`n_seeds: 1`, `tta_shifts: [0]` in
+`artifacts/runs/lobo_summary.json`).
+
+The exported INT8 weights were trained with the identical single-model recipe, on
+all 29 bearings (`train.py:523`, `train.py:548`); 0.8018 is the leave-one-bearing-out
+estimate of that recipe's accuracy on an unseen bearing. No LOBO fold model ships —
+the 29 fold models each saw 28 bearings, and the quantised artefact is a 30th model
+that saw all of them. The recipe is the same; the training set is not.
+
+Corollary: the `float_accuracy: 0.9927` / `int8_accuracy: 0.9920` figures in
+`artifacts/int8_export/verification_full.json` are **training-set** accuracies. They
+exist to measure INT8-vs-float agreement (`argmax_agreement: 0.9988`), which is what
+the export bar is about. Neither is a generalisation estimate and neither belongs on
+a slide.
 
 Against a 85 % target: per-recording is **1.7 points short**. Window accuracy is
 5 points short.
