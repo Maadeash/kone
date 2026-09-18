@@ -281,6 +281,203 @@ exists to quantify it, and it is expected to fire hardest on the 3000 W fold. Wh
 the V1 leave-one-motor-out number turns out to be, **the 3000 W fold's contribution to
 it is not evidence of winding diagnosis.**
 
+## 7A. Instrument confound in the 3000 W motor
+
+**The headline finding of P1(a)/(b). This section is the slide.**
+
+The 3000 W motor was recorded on two different instruments, and which instrument was
+used is perfectly correlated with the fault type.
+
+### The chassis/module split
+
+| Motor | Fault type | DAQ chassis + module | Current channels | n |
+|---|---|---|---|---|
+| 3000 W | **inter-coil (faulty)** | **`cDAQ5Mod1`** | `ai0`, `ai1`, `ai3` | **7** |
+| 3000 W | inter-turn (faulty) | `cDAQ1Mod2` | `ai0`, `ai2`, `ai3` | 7 |
+| 3000 W | healthy | `cDAQ1Mod2` | `ai0`, `ai2`, `ai3` | 1 |
+| 1000 W | all | `cDAQ1Mod2` | `ai0`, `ai2`, `ai3` | 15 |
+| 1500 W | all | `cDAQ1Mod2` | `ai0`, `ai2`, `ai3` | 15 |
+
+The vibration files split the same way: `cDAQ5Mod8` for the same seven recordings,
+`cDAQ1Mod1` for the other 41.
+
+### The fault-type split, per motor
+
+| Motor | Batch | n | intercoil | interturn | Balanced? |
+|---|---|---|---|---|---|
+| 1000 W | `kW_` / `(+,+,+)` | 8 | 4 | 4 | **yes** |
+| 1000 W | `kw_` / `(+,+,-)` | 8 | 4 | 4 | **yes** |
+| 1500 W | `kW_` / `(+,-,-)` | 8 | 4 | 4 | **yes** |
+| 1500 W | `kw_` / `(+,-,-)` | 8 | 4 | 4 | **yes** |
+| **3000 W** | **`Current_` / cDAQ5 / `(+,+,+)`** | **7** | **7** | **0** | **NO** |
+| **3000 W** | `kW_` / `(+,-,-)` | 5 | 1 (healthy dup) | 4 | **NO** |
+| **3000 W** | `kw_` / `(+,-,-)` | 4 | 0 | 4 | **NO** |
+
+For the 3000 W motor:
+
+- every inter-coil fault is on `cDAQ5Mod1`;
+- every inter-turn fault is on `cDAQ1Mod2`;
+- the single healthy recording is on `cDAQ1Mod2`.
+
+**A model that has learned nothing whatsoever about windings can score 100 % on the
+3000 W motor by detecting which instrument recorded the file.** Both the three-class
+task and the binary healthy/fault task are separable this way.
+
+This cannot be corrected. The information required to separate winding state from
+instrument state is not present in the data. It can only be measured and declared.
+
+### Why this matters beyond this project
+
+Any analysis of this dataset that pools the 3000 W recordings without a split that is
+aware of the acquisition batch may be measuring the instrument rather than the winding.
+That applies to our own V1 number as much as to anyone else's, which is why §10 reports
+V1 twice — all three folds, and the 1000/1500 W folds alone. The second is the
+defensible winding number; the first exists to show what the confound does to it.
+
+### Three independent fingerprints of the same thing
+
+The confound shows up three separate ways, each measurable without reference to the
+others. That is what makes it a finding rather than an artefact of one analysis choice.
+
+| # | Fingerprint | Evidence | Where |
+|---|---|---|---|
+| 1 | **DAQ chassis and module** | `cDAQ5Mod1`/`cDAQ5Mod8` vs `cDAQ1Mod2`/`cDAQ1Mod1`, read straight from the TDMS channel paths | this section |
+| 2 | **Probe polarity pattern** | three distinct wiring patterns, `(+,+,+)` / `(+,+,-)` / `(+,-,-)`, recovered by minimising abs(I0) | §6.2 |
+| 3 | **Session-clustered residual** | after the sign fix the residual takes six tight clusters that map onto sessions, not onto severity | §6.3, §7B |
+
+## 7B. The residual recovers the session — and 70 % of the fault label
+
+`i0rel_residual` = abs(I0) / max(abs(I1), abs(I2)) after the polarity fix.
+
+**In a three-wire machine this quantity is zero by Kirchhoff, whatever the winding is
+doing.** Any non-zero value is a measurement artefact and carries, by construction, no
+information about the fault. That is what makes the following alarming.
+
+Leave-one-out 1-nearest-neighbour on **this single scalar**, across the 45 unique
+recordings:
+
+| Predicting | From `i0rel_residual` | Majority baseline |
+|---|---|---|
+| acquisition batch | **0.933** | 0.511 |
+| DAQ chassis | **0.933** | 0.844 |
+| **fault class** | **0.800** | 0.467 |
+
+Restricted to the two motors with balanced batches — the "clean" case:
+
+| Subset | → batch | baseline | → **fault class** | baseline |
+|---|---|---|---|---|
+| all 3 motors | 0.933 | 0.511 | 0.800 | 0.467 |
+| **1000 + 1500 W only** | **1.000** | 0.500 | **0.700** | 0.467 |
+| 3000 W only | 1.000 | 0.533 | 0.933 | 0.467 |
+
+Read the middle row carefully. On the two motors with **no** chassis confound and
+**balanced** fault types within every batch, a scalar that is physically required to be
+zero still identifies the acquisition session **perfectly**, and still predicts the
+fault class at 0.700 against a 0.467 baseline.
+
+The mechanism is not subtle: severity levels were recorded in alternating sessions
+(§6.3), so session partially determines which severities — and therefore which labels —
+a recording can carry. Any feature that leaks session identity leaks label information
+with it.
+
+The residual splits into six clusters, not five. Within `cDAQ1Mod2 (+,-,-)` alone
+(n = 23) the sorted values are:
+
+```
+0.0309 0.0309 0.0310 0.0315 0.0350 0.0352 0.0360 0.0360 0.0377 0.0378 0.0384 0.0402
+                                    |  gap of 0.0266  |
+0.0668 0.0672 0.0673 0.0677 0.0687 0.0690 0.0692 0.0692 0.0705 0.0723 0.0788
+```
+
+Twelve and eleven, with a gap six times wider than the spread within either group.
+
+**Consequence for the branch:** this scalar and its relatives are *not* used as
+features. They are reported in V4 as session predictors, because recovering session
+identity from a quantity unrelated to windings is a stronger and plainer demonstration
+of the confound than a trained model doing the same thing.
+
+## 7C. Decision: per-channel gain calibration is computed but NOT applied
+
+`workflow_v2.md` §13.8 called for a per-channel gain calibration to remove the 3–7 %
+residual that survives the sign fix. It was implemented
+(`adapters/kaist_pmsm.py::calibrate_gains`), measured, and **disabled by default**. The
+gains are still computed and recorded in `provenance["gains_computed"]` so the decision
+stays auditable; `gain_calibration=True` reproduces the rejected behaviour.
+
+Three measurements, in increasing order of seriousness.
+
+**1. It is not a diagnostic — it zeroes abs(I0) by construction.** Two free real
+parameters against a complex residual with two real degrees of freedom has an exact
+solution almost always. 25 of 45 recordings came out at exactly `0.0000`. A number that
+is zero because the algebra forces it to be zero measures nothing, so "residual after
+calibration" cannot be used as evidence that the calibration worked.
+
+**2. The gain model is wrong for 20 of 45 files.** Those hit the ±15 % plausibility
+clamp, i.e. the fit wanted corrections larger than any credible sensor gain mismatch.
+Whatever produces the residual in those recordings is not a per-channel scalar gain.
+
+**3. It moves the feature further than the fault does.** Measured change in the
+negative-sequence ratio when the calibration is enabled:
+
+| Recording | after sign fix | after gain fix | change |
+|---|---|---|---|
+| 1000 W healthy | 0.0236 | 0.0306 | +0.0071 |
+| 1000 W inter-coil 7.56 % | 0.0258 | 0.0318 | +0.0060 |
+| 1000 W inter-turn 21.69 % | 0.0775 | 0.0840 | +0.0065 |
+| **1500 W healthy** | **0.0655** | **0.0151** | **−0.0504** |
+| 1500 W inter-turn 8.74 % | 0.0096 | 0.0341 | +0.0245 |
+| 3000 W inter-turn 17.86 % | 0.0904 | 0.1193 | +0.0289 |
+
+The entire fault-signal range across this dataset is roughly 0.01 – 0.11. A correction
+that can shift a value by 0.05 is not a correction on that scale — it is a second,
+larger source of variance placed on top of the first. Zeroing the residual is only safe
+if it is pure artefact, and finding (2) says it is not.
+
+**What is done instead:** apply the sign fix, which is discrete, physically unambiguous
+and verified on all 48 files, and treat the residual as a measured per-file confound
+(§7B).
+
+### Timing skew: tested, inconclusive
+
+If the residual is not a gain error, the obvious alternative is an inter-channel timing
+skew. The two models are distinguishable in principle because they differ in frequency
+dependence: a gain error is frequency-independent, while a timing skew produces a phase
+error proportional to frequency, so the implied Δt should be constant across harmonics
+while the phase grows.
+
+Both models were fitted independently at harmonics 1–4 of f_e on all 45 recordings
+(~41 s). **The test is inconclusive, for a reason that is itself worth recording: there
+is no usable signal at the harmonics.**
+
+| Harmonic | Median weakest-channel magnitude |
+|---|---|
+| 1 × f_e (200 Hz) | **1.4986** |
+| 2 × f_e (400 Hz) | 0.0149 |
+| 3 × f_e (600 Hz) | 0.0048 |
+| 4 × f_e (800 Hz) | 0.0135 |
+
+Roughly 100× down. Fits at harmonics 2–4 are fitting noise, and produce nonsense
+(one file's fitted gain came out at 1.8e15). Without frequency leverage the two models
+are **observationally equivalent** at the fundamental: both have two free parameters,
+both drive the residual to zero exactly, and neither can be preferred on fit quality.
+
+**So: we do not know whether the residual is a gain error or a timing skew, and this
+dataset cannot tell us.** Recorded as an open question rather than guessed at.
+
+What the fit *does* show is that either parameterisation is a session fingerprint. The
+implied skew at the fundamental clusters as tightly as the residual itself:
+
+| Batch | n | fitted g1 | implied dt1 (µs) |
+|---|---|---|---|
+| `cDAQ1Mod2` `(+,+,+)` | 7 | 1.020 – 1.025 | −0.72 – 4.00 |
+| `cDAQ1Mod2` `(+,+,-)` | 8 | 0.855 – 0.866 | 95.01 – 99.49 |
+| `cDAQ1Mod2` `(+,-,-)` | 23 | 0.829 – 0.941 | 70.27 – 136.77 |
+| `cDAQ5Mod1` `(+,+,+)` | 7 | 0.890 – 0.927 | 102.36 – 126.90 |
+
+Leave-one-out 1-NN from the implied skew alone recovers the batch at **0.933**, the same
+as the residual. Whichever physical story is correct, the quantity is an instrument
+fingerprint — which is the point of §7B, and does not depend on resolving it.
+
 ## 8. Electrical fundamental
 
 **f_e = 200.00 Hz in all 48 current recordings**, measured by DFT peak search over
