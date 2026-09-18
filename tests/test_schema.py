@@ -98,8 +98,10 @@ def test_every_declared_stage_is_constructible():
 
 def test_duration_uses_the_shortest_channel():
     """
-    D2 channels within one file differ by up to a second (measured 124.8 /
-    125.8 / 125.8 s). Indexing against the longest walks off the end of another.
+    Indexing against the longest channel walks off the end of a shorter one.
+    (D2 itself turns out to have equal-length channels -- the earlier claim of a
+    1 s spread was a chunked-segment miscount in a hand-written parser. The rule
+    still guards adapters that produce ragged channels.)
     """
     r = make(signals={"ia": np.zeros(1000), "ib": np.zeros(800)},
              fs={"ia": 1000.0, "ib": 1000.0})

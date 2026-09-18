@@ -103,9 +103,14 @@ class Recording:
         """
         Seconds.  With no channel, the SHORTEST channel's duration.
 
-        Shortest rather than longest deliberately: D2 channels within one file
-        differ by up to a second (measured 124.8 / 125.8 / 125.8 s), and a window
-        index computed against the longest channel walks off the end of another.
+        Shortest rather than longest so that a window index computed from this is
+        valid for every channel.  An earlier draft justified this with a measured
+        within-file length spread in D2; that measurement was wrong -- it came
+        from a hand-written TDMS parser that miscounted chunked segments, and
+        nptdms reports all 48 D2 current recordings as having three exactly
+        equal-length channels.  The rule stays because it costs nothing and
+        because adapters legitimately produce ragged channels (a decimation that
+        divides unevenly, a trimmed transient), not because D2 needs it today.
         """
         names = [channel] if channel else list(self.signals)
         return min(len(self.signals[n]) / self.fs[n] for n in names)
