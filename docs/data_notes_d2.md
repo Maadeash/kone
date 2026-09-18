@@ -380,7 +380,7 @@ The mechanism is not subtle: severity levels were recorded in alternating sessio
 a recording can carry. Any feature that leaks session identity leaks label information
 with it.
 
-The residual splits into six clusters, not five. Within `cDAQ1Mod2 (+,-,-)` alone
+The residual splits the five batch keys further. Within `cDAQ1Mod2 (+,-,-)` alone
 (n = 23) the sorted values are:
 
 ```
@@ -390,6 +390,8 @@ The residual splits into six clusters, not five. Within `cDAQ1Mod2 (+,-,-)` alon
 ```
 
 Twelve and eleven, with a gap six times wider than the spread within either group.
+**These twelve and eleven are exactly the 2022-03-08 and 2022-01-25 recordings** --
+see §7D, which re-derives the whole partition from metadata alone.
 
 **Consequence for the branch:** this scalar and its relatives are *not* used as
 features. They are reported in V4 as session predictors, because recovering session
@@ -477,6 +479,125 @@ implied skew at the fundamental clusters as tightly as the residual itself:
 Leave-one-out 1-NN from the implied skew alone recovers the batch at **0.933**, the same
 as the residual. Whichever physical story is correct, the quantity is an instrument
 fingerprint — which is the point of §7B, and does not depend on resolving it.
+
+## 7D. Sessions: verified from metadata, and what they cost
+
+**This section is the centrepiece of the winding slide, whatever the model numbers
+turn out to be.** It supersedes the count in §7B — see "Correction" at the end.
+
+### The acquisition sessions are real, and they are in the file metadata
+
+The session grouping was first noticed through the residual (§7B). Before relying on
+it as a group axis it was re-derived from metadata alone, with no reference to the
+residual: TDMS root `Date Created`, `wf_start_time`, root-name style, recording
+duration, and DAQ chassis/module.
+
+**The dataset was recorded on three days.**
+
+| Day | n | DAQ chassis | Duration | Root-name style |
+|---|---|---|---|---|
+| **2022-01-25** | 18 | `cDAQ1Mod2` | exactly 120.0 s | `<kW>kW_<R>ohm_current` |
+| **2022-03-08** | 20 | `cDAQ1Mod2` | 121.5 – 149.3 s (variable) | `<kW>kw_<R>ohm_current_<type>` |
+| **2022-08-11** | 7 | **`cDAQ5Mod1`** | exactly 120.0 s | `Current_<R>` |
+
+Four independent metadata signals — date, chassis, duration discipline, naming
+convention — agree on the same partition. Within each day the recordings run in
+contiguous per-motor blocks separated by tens of minutes, e.g. on 2022-01-25 the
+1000 W block runs 02:59–04:56, the 1500 W block 06:22–07:04, the 3000 W block
+07:18–07:41.
+
+### The residual reproduces the metadata partition exactly
+
+Cross-tabulating the residual-derived groups against acquisition date:
+
+| Day | Residual-derived groups present |
+|---|---|
+| 2022-01-25 | `cDAQ1Mod2 (+,+,+)` n=7, `cDAQ1Mod2 (+,-,-)` high-residual n=11 |
+| 2022-03-08 | `cDAQ1Mod2 (+,+,-)` n=8, `cDAQ1Mod2 (+,-,-)` low-residual n=12 |
+| 2022-08-11 | `cDAQ5Mod1 (+,+,+)` n=7 |
+
+**Every residual-derived group lies entirely within one acquisition day. Perfect
+nesting, no group straddles a date.** In particular the 12/11 split inside the
+`(+,-,-)` polarity group — which the residual found as a gap of 0.0266 — is exactly
+the 2022-03-08 / 2022-01-25 boundary.
+
+**So the split is a fact about the acquisition, not an artefact of the probe.** The
+residual reveals the sessions; it does not invent them. That is what makes
+leave-one-session-out a legitimate protocol rather than a post-hoc convenience.
+
+### Correction to §7B
+
+§7B said the residual "splits into six clusters, not five". That was wrong: it is
+**five** residual-derived groups, which nest into **three** acquisition days. The
+error came from counting the 12/11 sub-split as an addition to five groups when the
+five already included it via the root-name style. The verification above is what
+caught it, which is the argument for doing the verification.
+
+### The cost: the healthy class exists in one session only
+
+| Day | healthy | inter_coil | inter_turn | total |
+|---|---|---|---|---|
+| **2022-01-25** | **3** | 6 | 9 | 18 |
+| 2022-03-08 | **0** | 8 | 12 | 20 |
+| 2022-08-11 | **0** | 7 | 0 | 7 |
+
+All three healthy recordings — the only three in the dataset — were taken on
+**2022-01-25**:
+
+```
+1000W_0_00_current_intercoil.tdms   2022-01-25 02:59:04   cDAQ1Mod2
+1500W_0_00_current_intercoil.tdms   2022-01-25 06:22:43   cDAQ1Mod2
+3000W_0_00_current_intercoil.tdms   2022-01-25 07:18:18   cDAQ1Mod2
+```
+
+**Healthy versus faulty is therefore perfectly confounded with acquisition session.**
+Under leave-one-session-out every fold is degenerate for that task:
+
+| Held-out day | Train | Test | Verdict |
+|---|---|---|---|
+| 2022-01-25 | coil 15, turn 12, **healthy 0** | healthy 3, coil 6, turn 9 | **train cannot learn `healthy`** |
+| 2022-03-08 | healthy 3, coil 13, turn 9 | coil 8, turn 12, **healthy 0** | **test cannot score `healthy`** |
+| 2022-08-11 | healthy 3, coil 14, turn 21 | coil 7, **healthy 0** | **test cannot score `healthy`** |
+
+There is no ordering of these folds that both trains and tests the healthy class.
+**No session-aware protocol on this dataset can evaluate healthy/fault detection.**
+The binary healthy-versus-fault task, which `workflow_v2.md` §13.8 nominated as the
+B-S4 headline, is not measurable here under a group-aware split. A number for it can
+only be produced by a protocol that lets acquisition session leak across the split,
+and such a number is not evidence of winding diagnosis.
+
+### What remains measurable
+
+Inter-coil versus inter-turn, dropping `healthy`:
+
+| Held-out day | Train | Test | Usable? |
+|---|---|---|---|
+| 2022-01-25 | coil 15, turn 12 | coil 6, turn 9 | **yes** |
+| 2022-03-08 | coil 13, turn 9 | coil 8, turn 12 | **yes** |
+| 2022-08-11 | coil 14, turn 21 | coil 7, turn 0 | degenerate — single class |
+
+Two usable folds, plus a third that can contribute to a pooled score but has no
+inter-turn recordings to discriminate against. This is the only B-S4 task that
+survives a session-aware split, and two folds is below the pre-registered
+`min_validation_groups = 3` floor for `Fault` authority.
+
+### The four confounds, together
+
+| # | Confound | Scope | Correctable? |
+|---|---|---|---|
+| 1 | **Healthy class in one session only** | whole dataset | **No.** Kills healthy/fault under any session-aware split. |
+| 2 | **3000 W inter-coil on a separate rig and day** | 3000 W motor | **No.** Fault type = instrument for that motor (§7A). |
+| 3 | **Session recoverable from a winding-independent scalar** at 1.000 | whole dataset | No — but measurable, and reported in V4 (§7B). |
+| 4 | **Severity alternates with session** | 1000 W, 1500 W | No — it is why (3) leaks label information. |
+
+Each was found by a different route — class counts, channel paths, a physics-motivated
+residual, and the severity ordering — and each is independently verifiable from the
+files. Together they say the same thing: **on this dataset, acquisition session and
+winding state are entangled to a degree that no preprocessing removes.**
+
+That is a finding about the dataset, and it is worth publishing as one. It is not a
+finding about our pipeline, and it does not reflect on the Paderborn bearing branch,
+which has 29 independent specimens and a clean group axis.
 
 ## 8. Electrical fundamental
 
