@@ -13,3 +13,10 @@ artifacts/runs/*.npz
 
 # Kept as evidence but large and not reproducible here; see its README
 docs/prior_results/v4_caches_other_machine/
+
+# External datasets (D2/D3/D4) -- fetch separately
+data_ext/
+
+# Upstream simulator source
+third_party/
+
