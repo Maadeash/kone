@@ -1,40 +1,40 @@
 {
   "aggregation_curve": {
-    "1": 0.8370689655172414,
-    "2": 0.8517241379310345,
-    "5": 0.858103448275862,
-    "10": 0.8579310344827586,
-    "20": 0.86,
-    "40": 0.8605172413793103
+    "1": 0.8375862068965517,
+    "2": 0.8494827586206897,
+    "5": 0.858448275862069,
+    "10": 0.8620689655172413,
+    "20": 0.8624137931034482,
+    "40": 0.8625862068965517
   },
   "scheme": "leave-one-bearing-out, pooled",
   "n_folds": 29,
   "pooled": {
-    "window_acc": 0.7943988649682314,
-    "macro_f1": 0.7852458279175281,
-    "recording_acc": 0.8356341673856773,
-    "n_windows": 16211,
-    "n_recordings": 2318,
-    "majority_baseline": 0.41311455184751095
+    "window_acc": 0.7978545296707386,
+    "macro_f1": 0.7875627474331583,
+    "recording_acc": 0.8382480485689505,
+    "n_windows": 16127,
+    "n_recordings": 2306,
+    "majority_baseline": 0.4152663235567682
   },
-  "per_bearing_acc_mean": 0.7944608441400226,
-  "per_bearing_acc_std": 0.283582281373775,
-  "per_bearing_acc_sem": 0.05265990764072303,
+  "per_bearing_acc_mean": 0.7982613919343532,
+  "per_bearing_acc_std": 0.2852475487519001,
+  "per_bearing_acc_sem": 0.05296914002965918,
   "confusion": [
     [
-      2670,
-      538,
+      2658,
+      550,
       152
     ],
     [
-      786,
-      4879,
-      489
+      764,
+      4878,
+      428
     ],
     [
-      501,
-      867,
-      5329
+      558,
+      808,
+      5331
     ]
   ],
   "labels": [
@@ -42,7 +42,7 @@
     "inner_race",
     "outer_race"
   ],
-  "seconds": 3929.3,
+  "seconds": 148.4,
   "folds": [
     {
       "fold": 0,
@@ -51,13 +51,13 @@
       "origin": "none",
       "n_test_windows": 560,
       "n_test_recordings": 80,
-      "window_acc": 1.0,
-      "macro_f1": 0.3333333333333333,
+      "window_acc": 0.9982142857142857,
+      "macro_f1": 0.33303544831694964,
       "recording_acc": 1.0,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 207.5
+      "seconds": 7.5
     },
     {
       "fold": 1,
@@ -66,13 +66,13 @@
       "origin": "none",
       "n_test_windows": 560,
       "n_test_recordings": 80,
-      "window_acc": 0.05357142857142857,
-      "macro_f1": 0.03389830508474576,
+      "window_acc": 0.0625,
+      "macro_f1": 0.0392156862745098,
       "recording_acc": 0.0,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 145.3
+      "seconds": 5.0
     },
     {
       "fold": 2,
@@ -87,7 +87,7 @@
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 135.1
+      "seconds": 5.0
     },
     {
       "fold": 3,
@@ -96,13 +96,13 @@
       "origin": "none",
       "n_test_windows": 560,
       "n_test_recordings": 80,
-      "window_acc": 0.9517857142857142,
-      "macro_f1": 0.32509911558401955,
+      "window_acc": 0.9214285714285714,
+      "macro_f1": 0.31970260223048325,
       "recording_acc": 1.0,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 133.2
+      "seconds": 5.0
     },
     {
       "fold": 4,
@@ -111,13 +111,13 @@
       "origin": "none",
       "n_test_windows": 560,
       "n_test_recordings": 80,
-      "window_acc": 0.7625,
-      "macro_f1": 0.28841607565011823,
-      "recording_acc": 0.9125,
+      "window_acc": 0.7660714285714286,
+      "macro_f1": 0.2891809908998989,
+      "recording_acc": 0.95,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 123.1
+      "seconds": 5.0
     },
     {
       "fold": 5,
@@ -126,13 +126,13 @@
       "origin": "none",
       "n_test_windows": 560,
       "n_test_recordings": 80,
-      "window_acc": 1.0,
-      "macro_f1": 0.3333333333333333,
+      "window_acc": 0.9982142857142857,
+      "macro_f1": 0.33303544831694964,
       "recording_acc": 1.0,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 123.7
+      "seconds": 5.0
     },
     {
       "fold": 6,
@@ -147,7 +147,7 @@
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 133.8
+      "seconds": 5.0
     },
     {
       "fold": 7,
@@ -156,13 +156,13 @@
       "origin": "artificial",
       "n_test_windows": 560,
       "n_test_recordings": 80,
-      "window_acc": 0.49464285714285716,
-      "macro_f1": 0.22062923138191956,
-      "recording_acc": 0.3125,
+      "window_acc": 0.5696428571428571,
+      "macro_f1": 0.24194160030337505,
+      "recording_acc": 0.475,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 127.4
+      "seconds": 5.0
     },
     {
       "fold": 8,
@@ -171,13 +171,13 @@
       "origin": "real",
       "n_test_windows": 553,
       "n_test_recordings": 79,
-      "window_acc": 0.9421338155515371,
-      "macro_f1": 0.3234016139044072,
+      "window_acc": 0.969258589511754,
+      "macro_f1": 0.32812978267523724,
       "recording_acc": 0.9873417721518988,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 135.0
+      "seconds": 5.0
     },
     {
       "fold": 9,
@@ -186,13 +186,13 @@
       "origin": "artificial",
       "n_test_windows": 559,
       "n_test_recordings": 80,
-      "window_acc": 0.9284436493738819,
-      "macro_f1": 0.3209647495361781,
+      "window_acc": 0.8747763864042933,
+      "macro_f1": 0.3110687022900763,
       "recording_acc": 0.9875,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 127.9
+      "seconds": 5.0
     },
     {
       "fold": 10,
@@ -201,13 +201,13 @@
       "origin": "artificial",
       "n_test_windows": 560,
       "n_test_recordings": 80,
-      "window_acc": 0.9803571428571428,
-      "macro_f1": 0.33002705139765554,
+      "window_acc": 0.9857142857142858,
+      "macro_f1": 0.33093525179856115,
       "recording_acc": 1.0,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 131.0
+      "seconds": 5.0
     },
     {
       "fold": 11,
@@ -216,13 +216,13 @@
       "origin": "artificial",
       "n_test_windows": 560,
       "n_test_recordings": 80,
-      "window_acc": 0.8607142857142858,
-      "macro_f1": 0.30838131797824697,
+      "window_acc": 0.8714285714285714,
+      "macro_f1": 0.3104325699745547,
       "recording_acc": 0.95,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 133.7
+      "seconds": 5.0
     },
     {
       "fold": 12,
@@ -231,13 +231,13 @@
       "origin": "artificial",
       "n_test_windows": 552,
       "n_test_recordings": 79,
-      "window_acc": 0.9402173913043478,
-      "macro_f1": 0.323062558356676,
+      "window_acc": 0.9094202898550725,
+      "macro_f1": 0.31752055660974066,
       "recording_acc": 1.0,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 128.4
+      "seconds": 5.0
     },
     {
       "fold": 13,
@@ -246,13 +246,13 @@
       "origin": "artificial",
       "n_test_windows": 559,
       "n_test_recordings": 80,
-      "window_acc": 0.998211091234347,
-      "macro_f1": 0.333034914950761,
+      "window_acc": 0.9946332737030411,
+      "macro_f1": 0.33243647234678625,
       "recording_acc": 1.0,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 128.5
+      "seconds": 4.9
     },
     {
       "fold": 14,
@@ -261,13 +261,13 @@
       "origin": "real",
       "n_test_windows": 558,
       "n_test_recordings": 80,
-      "window_acc": 0.7670250896057348,
-      "macro_f1": 0.2893847194050034,
-      "recording_acc": 0.95,
+      "window_acc": 0.8261648745519713,
+      "macro_f1": 0.3016028786391887,
+      "recording_acc": 0.975,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 129.7
+      "seconds": 5.0
     },
     {
       "fold": 15,
@@ -276,13 +276,13 @@
       "origin": "real",
       "n_test_windows": 560,
       "n_test_recordings": 80,
-      "window_acc": 0.9642857142857143,
-      "macro_f1": 0.32727272727272727,
-      "recording_acc": 0.9875,
+      "window_acc": 0.9589285714285715,
+      "macro_f1": 0.32634457611668183,
+      "recording_acc": 1.0,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 127.3
+      "seconds": 5.0
     },
     {
       "fold": 16,
@@ -291,13 +291,13 @@
       "origin": "real",
       "n_test_windows": 557,
       "n_test_recordings": 80,
-      "window_acc": 0.4021543985637343,
-      "macro_f1": 0.19120785317968417,
-      "recording_acc": 0.4625,
+      "window_acc": 0.35368043087971274,
+      "macro_f1": 0.1741821396993811,
+      "recording_acc": 0.4375,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 128.3
+      "seconds": 5.0
     },
     {
       "fold": 17,
@@ -306,13 +306,13 @@
       "origin": "real",
       "n_test_windows": 560,
       "n_test_recordings": 80,
-      "window_acc": 0.2732142857142857,
-      "macro_f1": 0.14305750350631136,
-      "recording_acc": 0.125,
+      "window_acc": 0.24107142857142858,
+      "macro_f1": 0.12949640287769784,
+      "recording_acc": 0.1,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 129.0
+      "seconds": 5.0
     },
     {
       "fold": 18,
@@ -321,13 +321,13 @@
       "origin": "artificial",
       "n_test_windows": 560,
       "n_test_recordings": 80,
-      "window_acc": 0.9875,
-      "macro_f1": 0.3312368972746331,
+      "window_acc": 0.9982142857142857,
+      "macro_f1": 0.33303544831694964,
       "recording_acc": 1.0,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 134.6
+      "seconds": 5.0
     },
     {
       "fold": 19,
@@ -336,13 +336,13 @@
       "origin": "artificial",
       "n_test_windows": 560,
       "n_test_recordings": 80,
-      "window_acc": 0.6,
-      "macro_f1": 0.25,
-      "recording_acc": 0.8125,
+      "window_acc": 0.5946428571428571,
+      "macro_f1": 0.24860022396416573,
+      "recording_acc": 0.7375,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 127.8
+      "seconds": 5.0
     },
     {
       "fold": 20,
@@ -351,13 +351,13 @@
       "origin": "real",
       "n_test_windows": 560,
       "n_test_recordings": 80,
-      "window_acc": 0.8696428571428572,
-      "macro_f1": 0.31009232728430436,
-      "recording_acc": 0.9,
+      "window_acc": 0.9,
+      "macro_f1": 0.3157894736842105,
+      "recording_acc": 0.9375,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 130.9
+      "seconds": 5.0
     },
     {
       "fold": 21,
@@ -366,13 +366,13 @@
       "origin": "artificial",
       "n_test_windows": 559,
       "n_test_recordings": 80,
-      "window_acc": 0.008944543828264758,
-      "macro_f1": 0.0059101654846335705,
+      "window_acc": 0.007155635062611807,
+      "macro_f1": 0.004736530491415039,
       "recording_acc": 0.0,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 123.5
+      "seconds": 5.1
     },
     {
       "fold": 22,
@@ -381,13 +381,13 @@
       "origin": "artificial",
       "n_test_windows": 559,
       "n_test_recordings": 80,
-      "window_acc": 0.7656529516994633,
-      "macro_f1": 0.2890915231340763,
-      "recording_acc": 0.8875,
+      "window_acc": 0.7549194991055456,
+      "macro_f1": 0.28678219503907576,
+      "recording_acc": 0.8375,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 124.3
+      "seconds": 5.1
     },
     {
       "fold": 23,
@@ -396,28 +396,28 @@
       "origin": "artificial",
       "n_test_windows": 558,
       "n_test_recordings": 80,
-      "window_acc": 0.9802867383512545,
-      "macro_f1": 0.3300150829562594,
+      "window_acc": 0.978494623655914,
+      "macro_f1": 0.3297101449275362,
       "recording_acc": 0.9875,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 136.6
+      "seconds": 5.1
     },
     {
       "fold": 24,
       "test_bearing": "KI14",
       "test_label": "inner_race",
       "origin": "real",
-      "n_test_windows": 560,
-      "n_test_recordings": 80,
-      "window_acc": 0.8321428571428572,
-      "macro_f1": 0.3027940220922677,
-      "recording_acc": 0.9875,
+      "n_test_windows": 476,
+      "n_test_recordings": 68,
+      "window_acc": 0.865546218487395,
+      "macro_f1": 0.3093093093093093,
+      "recording_acc": 1.0,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 142.1
+      "seconds": 5.1
     },
     {
       "fold": 25,
@@ -426,13 +426,13 @@
       "origin": "real",
       "n_test_windows": 562,
       "n_test_recordings": 80,
-      "window_acc": 0.9857651245551602,
-      "macro_f1": 0.3309438470728793,
+      "window_acc": 0.9822064056939501,
+      "macro_f1": 0.33034111310592457,
       "recording_acc": 1.0,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 138.8
+      "seconds": 5.0
     },
     {
       "fold": 26,
@@ -441,13 +441,13 @@
       "origin": "real",
       "n_test_windows": 559,
       "n_test_recordings": 80,
-      "window_acc": 0.8837209302325582,
-      "macro_f1": 0.3127572016460905,
-      "recording_acc": 1.0,
+      "window_acc": 0.8729874776386404,
+      "macro_f1": 0.3107290671760586,
+      "recording_acc": 0.975,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 135.8
+      "seconds": 5.0
     },
     {
       "fold": 27,
@@ -462,7 +462,7 @@
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 142.3
+      "seconds": 5.0
     },
     {
       "fold": 28,
@@ -471,26 +471,26 @@
       "origin": "real",
       "n_test_windows": 558,
       "n_test_recordings": 80,
-      "window_acc": 0.8064516129032258,
-      "macro_f1": 0.2976190476190476,
-      "recording_acc": 0.9875,
+      "window_acc": 0.8942652329749103,
+      "macro_f1": 0.3147272153894671,
+      "recording_acc": 1.0,
       "baseline": 1.0,
       "best_epoch": 19,
       "val_acc": NaN,
-      "seconds": 138.1
+      "seconds": 5.0
     }
   ],
   "by_damage_origin": {
     "real": {
       "n_bearings": 17,
-      "window_acc": 0.7938144329896907,
-      "macro_f1": 0.7890958713463068,
-      "majority_baseline": 0.35346097201767307
+      "window_acc": 0.8000424538314583,
+      "macro_f1": 0.7951870318091396,
+      "majority_baseline": 0.35661218424962854
     },
     "artificial": {
       "n_bearings": 18,
-      "window_acc": 0.7950322901142574,
-      "macro_f1": 0.7832092829130325,
+      "window_acc": 0.7935419771485345,
+      "macro_f1": 0.7817817499201736,
       "majority_baseline": 0.38837555886736214
     }
   },

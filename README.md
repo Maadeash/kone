@@ -252,10 +252,12 @@ and 1500 rpm. Everything else is order-normalised; this one is not, on purpose.
 Two protocols are reported. Both are real; they answer different questions, and
 each number is labelled with the protocol that produced it.
 
-### Stratified 5-fold cross-validation
+### Stratified 5-fold over windows *(leaky reference)*
 
 The standard protocol in the Paderborn literature, and what published figures on
-this dataset use.
+this dataset use. **It is leaky**: windows from the same recording, and all 560
+windows of one bearing, land on both sides of the split. It measures recall of
+bearings the model has already seen, not generalisation to a new one.
 
 | Metric | Value |
 |---|---|
@@ -263,6 +265,9 @@ this dataset use.
 | **Macro-F1** | **0.9847** |
 | Majority baseline | 0.4153 |
 | Test windows | 16,127 |
+
+Measured on the **pre-rebuild cache** (2,306 recordings / 16,127 windows) with
+feature set v2. Not re-run after the 2026-09-18 cache rebuild.
 
 | Class | Precision | Recall | F1 | Support |
 |---|---|---|---|---|
@@ -276,7 +281,20 @@ Comparable to the 97.9–99.9 % range reported in the literature for this datase
 ### Leave-one-bearing-out
 
 Every bearing held out in turn, so the model is scored only on bearings it has
-never seen. This is the number that predicts field behaviour.
+never seen. **This is the number that predicts field behaviour**, and the one to
+quote.
+
+**Current — single run, rebuilt cache (2,318 recordings / 16,211 windows):**
+
+| Metric | Value |
+|---|---|
+| **Window accuracy** | **0.7944** |
+| **Macro-F1** | **0.7852** |
+| **Per-recording accuracy** | **0.8356** |
+| Per-bearing mean | 0.7945 ± 0.2836 (SEM 0.0527, n=29) |
+| Majority baseline | 0.4131 |
+
+**Prior — 3-repeat mean, pre-rebuild cache (2,306 recordings / 16,127 windows):**
 
 | Metric | Value (3 repeats) |
 |---|---|
@@ -284,9 +302,20 @@ never seen. This is the number that predicts field behaviour.
 | Macro-F1 | 0.7944 ± 0.0114 |
 | Per-recording accuracy | 0.8332 ± 0.0056 |
 
+Both are kept. The cache was rebuilt after the repo moved machines; this copy of
+`data/` has KI14's full 80 runs where the previous machine had 68, adding 12
+recordings and 84 windows. **The difference (−0.0035 window accuracy) is inside
+the ±0.0103 run-to-run noise floor** that the 3-repeat study measured on the same
+recipe, and the DSP front end is confirmed identical — the speed-estimate error
+reproduced to four significant figures across the rebuild. See
+[`docs/claims_audit.md`](docs/claims_audit.md) §1.3.
+
+The current figure is a single run and carries no error bar of its own; use
+±0.0103 as the noise floor when comparing against it.
+
 ### Why they differ
 
-**18.5 points, from protocol choice alone.** A random window split puts the
+**19.2 points, from protocol choice alone.** A random window split puts the
 seven near-identical windows of one recording — and the 560 windows of one
 bearing — on both sides of the split, so the model is partly scored on bearings
 it has already memorised.

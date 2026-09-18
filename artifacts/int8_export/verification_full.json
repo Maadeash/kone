@@ -1,20 +1,18 @@
 {
-  "n_windows": 16127,
-  "argmax_agreement": 0.9988218515532957,
-  "float_accuracy": 0.9926830780678365,
-  "int8_accuracy": 0.9920009921250077,
-  "disagreements": 19,
+  "n_windows": 16211,
+  "argmax_agreement": 0.9987662698167911,
+  "float_accuracy": 0.9922274998457837,
+  "int8_accuracy": 0.9914872617358583,
+  "disagreements": 20,
   "meets_98pct_bar": true,
   "disagreements_by_bearing": {
+    "KI05": 6,
+    "K002": 3,
     "KA03": 3,
-    "KA04": 3,
-    "KI05": 3,
-    "KA30": 3,
-    "KI07": 2,
-    "K002": 1,
+    "KA04": 2,
+    "KA05": 2,
+    "KA30": 2,
     "KA22": 1,
-    "KA16": 1,
-    "KA05": 1,
-    "KI03": 1
+    "KI14": 1
   }
 }

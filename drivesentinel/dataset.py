@@ -139,8 +139,15 @@ def index_report(records: List[Recording]) -> str:
     per_bearing = Counter(r.bearing for r in records)
     short = {b: n for b, n in sorted(per_bearing.items()) if n != 80}
     if short:
-        lines.append(f"NOT 80 runs  : {short}  (KA04 79 = duplicate dropped; "
-                     f"KI14 68 = absent from this copy)")
+        # KA04 79 = the byte-identical run-17/18 duplicate is dropped.
+        # KA08 79 = one structurally corrupt .mat (correct size and header,
+        #           unparseable variable stream).
+        # KI14 was 68 on the machine that produced artifacts/runs/lobo_summary.json
+        # before 2026-09-18; this copy of data/ has its full 80, which is why the
+        # rebuilt cache has 2,318 recordings / 16,211 windows against the 2,306 /
+        # 16,127 those recorded numbers were measured on.
+        lines.append(f"NOT 80 runs  : {short}  (KA04 = duplicate dropped, "
+                     f"KA08 = corrupt file skipped)")
 
     # Compare like with like: the config constant counts every usable recording,
     # so add back whatever the caller excluded before checking.

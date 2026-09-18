@@ -69,27 +69,128 @@ The one change that is larger than the noise floor — removing the inner valida
 by an amount not separately measured. A clean estimate would need an outer loop, or a
 recipe frozen before any sweep. Neither was done.
 
+### 1.3 Cache rebuild, 2026-09-18 — the numbers moved and why
+
+The repo was relocated to `C:\kone` and the Python environment did not survive.
+`artifacts/order_spectra_v2.npz`, its meta parquet, and
+`artifacts/runs/deployment_model.pt` were all absent, so the feature cache and every
+model were rebuilt from `data/`.
+
+**The rebuilt cache is not identical to the one behind the recorded numbers.**
+
+| | Pre-rebuild | Rebuilt | Δ |
+|---|---|---|---|
+| Recordings | 2,306 | **2,318** | +12 |
+| Windows | 16,127 | **16,211** | +84 |
+| `inner_race` windows | 6,070 | 6,154 | +84 |
+| KI14 recordings | **68** | **80** | +12 |
+| All other bearings | unchanged | unchanged | — |
+
+The entire difference is **KI14**. The machine that produced the recorded numbers held
+68 of its 80 runs; this copy of `data/` has all 80. `KA04` (79, byte-identical
+run-17/18 duplicate dropped) and `KA08` (79, one structurally corrupt `.mat`) are
+short in both. The stale note in `dataset.py` that said "KI14 68 = absent from this
+copy" was corrected at the same time.
+
+**The DSP front end is confirmed unchanged.** The speed-estimate error — computed from
+the phase current and validated against the tachometer on every recording — reproduced
+to four significant figures across the rebuild:
+
+| | Pre-rebuild | Rebuilt |
+|---|---|---|
+| Median speed error | 0.02214 % | **0.02210 %** |
+| p99 speed error | 0.20849 % | **0.20829 %** |
+
+Two independent runs of the whole front end over an overlapping but not identical set
+of 2,300+ recordings agreeing to that precision means the signal processing, the order
+resampling and the speed estimation are bit-stable across the move. The contract
+fingerprint `4fdbe9910a513c40` is also unchanged.
+
+**Effect on the headline number:**
+
+| Metric | Pre-rebuild (3 repeats) | Rebuilt (single run) | Δ | Noise floor |
+|---|---|---|---|---|
+| Window accuracy | 0.8018 ± 0.0103 | **0.7944** | −0.0035 | ±0.0103 |
+| Macro-F1 | 0.7944 ± 0.0114 | **0.7852** | −0.0024 | ±0.0114 |
+| Per-recording accuracy | 0.8332 ± 0.0056 | **0.8356** | −0.0026 | ±0.0056 |
+| Per-bearing mean | 0.7983 ± 0.2852 | **0.7945 ± 0.2836** | −0.0038 | — |
+
+Every difference is inside the run-to-run standard deviation the 3-repeat study
+measured on the same recipe. **This is not a regression and not an improvement — it is
+the same result measured again.**
+
+**Both numbers stay visible.** Neither is deleted. The rebuilt single-run figures are
+current; the 3-repeat figures are labelled "pre-rebuild cache" wherever they appear.
+`repeat.py` has **not** been re-run — it costs ~3¼ hours on this machine, which has no
+GPU. The pre-rebuild artefacts are preserved at
+`docs/prior_results/v5_pre_rebuild/`.
+
+**Caveat on the current figure:** it is a single run, so it has no error bar of its
+own. Use ±0.0103 as the noise floor when comparing anything against it. Do not compare
+a future configuration to 0.7944 and call a 0.005 difference an improvement.
+
+### 1.4 INT8 export re-run against the rebuilt model
+
+The shipped `.mem` files were exported from the **pre-rebuild** deployment model. That
+model's checkpoint no longer existed after the relocation, so the export could not have
+been re-verified against its own float parent. Both were regenerated on 2026-09-18 from
+`deployment_model.pt` as rebuilt.
+
+All ten `.mem` files changed (MD5 compared before and after). The previous export's
+weights are superseded; anything already flashed to an FPGA from them corresponds to a
+model trained on the pre-rebuild cache.
+
+| | Pre-rebuild export | Rebuilt export |
+|---|---|---|
+| argmax agreement, n=2,048 | 99.90 % | **99.85 %** |
+| argmax agreement, all windows | 99.882 % (16,127) | **99.877 %** (16,211) |
+| Disagreements, all windows | 19 | **20** |
+| Max \|logit\| difference | 4.0409 | **1.3486** |
+| Mean \|logit\| difference | 0.0811 | **0.0754** |
+| Weights / biases | 27,024 / 179 | 27,024 / 179 |
+| Accumulator bits (conv1–4, fc) | 21/22/23/23/21 | 21/22/23/23/21, all fit int32 |
+| Methodology bar ≥ 98 % | PASS | **PASS** |
+
+Both exports clear the bar comfortably. The max logit difference improved threefold,
+which is a quantisation-calibration detail and not a claim about accuracy.
+
+Disagreements concentrate on the known-hard specimens — `KI05` 6, `K002` 3, `KA03` 3,
+`KA04` 2, `KA05` 2, `KA30` 2, `KA22` 1, `KI14` 1. Eight bearings account for all 20.
+These are the same bearings the LOBO sweep fails on, which is what you would expect:
+INT8 and float disagree where the float model's own logits are closest together.
+
 ---
 
 ## 2. Bearing pipeline (S5, frozen)
 
-| Claim | Value | Protocol | Produced by | Recorded in | Regenerate |
-|---|---|---|---|---|---|
-| Window accuracy | **0.8018 ± 0.0103** | LOBO, 29 folds, pooled, 3 repeats | `scripts/experiments/repeat.py` | `artifacts/runs/repeat_v2.json` → `summary.window_acc` | `python scripts/experiments/repeat.py` |
-| Macro-F1 | **0.7944 ± 0.0114** | same | same | same → `summary.macro_f1` | same |
-| Per-recording accuracy | **0.8332 ± 0.0056** | same | same | same → `summary.recording_acc` | same |
-| Per-bearing mean | 0.7983 | LOBO, single run | `scripts/02_train_lobo.py` | `artifacts/runs/lobo_summary.json` → `per_bearing_acc_mean` | `python scripts/02_train_lobo.py` |
-| Pooled window accuracy | 0.7979 | same | same | same → `pooled.window_acc` | same |
-| Aggregation @ 40 windows | 0.8626 | LOBO + pooling | same | same → `aggregation_curve` | same |
-| Majority baseline | 0.4153 | — | same | same → `pooled.majority_baseline` | same |
-| v1 (2-channel) comparison | 0.7823 | LOBO, 3 repeats, feature set v1 | `scripts/experiments/repeat.py` | `artifacts/runs/repeat_noval.json` | `DRIVESENTINEL_FEATURE_SET=v1 python scripts/experiments/repeat.py` |
-| Accuracy **(leaky reference)** | **0.9865 ± 0.0024** | stratified 5-fold over **windows**, feature set **v2** | `scripts/experiments/shuffled_benchmark.py` | `artifacts/runs/shuffled_benchmark.json` → `accuracy` | `python scripts/experiments/shuffled_benchmark.py` |
-| Macro-F1 **(leaky reference)** | 0.9847 | same | same | same → `macro_f1` | same |
-| Window accuracy **(leaky reference)** | **0.9184** | shuffled windows, feature set **v1** | `scripts/experiments/task_variants.py:38` | `artifacts/runs/task_variants.json` → `3class_shuffled_LEAKY.window_acc` | `DRIVESENTINEL_FEATURE_SET=v1 python scripts/experiments/task_variants.py` |
-| Binary LOBO window accuracy | 0.7982 | LOBO, binary healthy/damaged | `scripts/experiments/task_variants.py` | `artifacts/runs/task_variants.json` → `binary_lobo.pooled.window_acc` | same |
-| Speed-estimate error | median 0.022 %, p99 0.208 % | current-derived vs tachometer, all recordings | `scripts/01_build_cache.py` | `artifacts/cache_report.json` | `python scripts/01_build_cache.py` |
-| INT8 vs float argmax agreement | **99.90 %** (n=2,048) | calibration-disjoint windows | `scripts/03_export_int8.py` | `artifacts/int8_export/verification.json` → `agreement.argmax_agreement` | `python scripts/03_export_int8.py` |
-| INT8 vs float agreement, full cache | 99.88 % | all 16,127 windows | `scripts/04_verify_golden.py` | `artifacts/int8_export/verification_full.json` | `python scripts/04_verify_golden.py` |
+**Cache generation matters for every row.** Rows marked **[rebuilt]** were measured on
+the 2026-09-18 rebuilt cache (2,318 recordings / 16,211 windows); rows marked
+**[pre-rebuild]** were measured on the earlier cache (2,306 / 16,127) and have not been
+re-run. See §1.3.
+
+| Claim | Value | Cache | Protocol | Produced by | Recorded in | Regenerate |
+|---|---|---|---|---|---|---|
+| **Window accuracy** | **0.7944** | **[rebuilt]** | LOBO, 29 folds, pooled, **single run** | `scripts/02_train_lobo.py` | `artifacts/runs/lobo_summary.json` → `pooled.window_acc` | `python scripts/02_train_lobo.py` |
+| **Macro-F1** | **0.7852** | **[rebuilt]** | same | same | same → `pooled.macro_f1` | same |
+| **Per-recording accuracy** | **0.8356** | **[rebuilt]** | same | same | same → `pooled.recording_acc` | same |
+| **Per-bearing mean** | **0.7945 ± 0.2836** (SEM 0.0527) | **[rebuilt]** | same | same | same → `per_bearing_acc_mean` / `_std` / `_sem` | same |
+| Majority baseline | 0.4131 | [rebuilt] | — | same | same → `pooled.majority_baseline` | same |
+| Aggregation @ 40 windows | 0.8626 | [pre-rebuild] | LOBO + pooling | same | `docs/prior_results/v5_pre_rebuild/lobo_summary_pre_rebuild.json` | same |
+| Window accuracy | 0.8018 ± 0.0103 | [pre-rebuild] | LOBO, 29 folds, pooled, **3 repeats** | `scripts/experiments/repeat.py` | `artifacts/runs/repeat_v2.json` → `summary.window_acc` | `python scripts/experiments/repeat.py` (~3¼ h, no GPU) |
+| Macro-F1 | 0.7944 ± 0.0114 | [pre-rebuild] | same | same | same → `summary.macro_f1` | same |
+| Per-recording accuracy | 0.8332 ± 0.0056 | [pre-rebuild] | same | same | same → `summary.recording_acc` | same |
+| **Run-to-run noise floor** | **± 0.0103** | [pre-rebuild] | 3 repeats, same recipe, different base seeds | same | same → `summary.window_acc.std` | same |
+| Pooled window accuracy | 0.7979 | [pre-rebuild] | LOBO, single run | `scripts/02_train_lobo.py` | `docs/prior_results/v5_pre_rebuild/lobo_summary_pre_rebuild.json` | superseded |
+| Per-bearing mean | 0.7983 ± 0.2852 | [pre-rebuild] | same | same | same | superseded |
+| v1 (2-channel) comparison | 0.7823 | [pre-rebuild] | LOBO, 3 repeats, feature set v1 | `scripts/experiments/repeat.py` | `artifacts/runs/repeat_noval.json` | `DRIVESENTINEL_FEATURE_SET=v1 python scripts/experiments/repeat.py` |
+| Accuracy **(leaky reference)** | **0.9865 ± 0.0024** | [pre-rebuild] | stratified 5-fold over **windows**, feature set **v2** | `scripts/experiments/shuffled_benchmark.py` | `artifacts/runs/shuffled_benchmark.json` → `accuracy` | `python scripts/experiments/shuffled_benchmark.py` |
+| Macro-F1 **(leaky reference)** | 0.9847 | [pre-rebuild] | same | same | same → `macro_f1` | same |
+| Window accuracy **(leaky reference)** | **0.9184** | [pre-rebuild] | shuffled windows, feature set **v1** | `scripts/experiments/task_variants.py:38` | `artifacts/runs/task_variants.json` → `3class_shuffled_LEAKY.window_acc` | `DRIVESENTINEL_FEATURE_SET=v1 python scripts/experiments/task_variants.py` |
+| Binary LOBO window accuracy | 0.7982 | [pre-rebuild] | LOBO, binary healthy/damaged | `scripts/experiments/task_variants.py` | `artifacts/runs/task_variants.json` → `binary_lobo.pooled.window_acc` | same |
+| Speed-estimate error | median **0.0221 %**, p99 **0.2083 %** | [rebuilt] | current-derived vs tachometer, all recordings | `scripts/01_build_cache.py` | `artifacts/cache_report.json` | `python scripts/01_build_cache.py` |
+| INT8 vs float argmax agreement | **99.85 %** (n=2,048) | [rebuilt] | calibration-disjoint windows | `scripts/03_export_int8.py` | `artifacts/int8_export/verification.json` → `agreement.argmax_agreement` | `python scripts/03_export_int8.py` |
+| INT8 vs float agreement, full cache | **99.877 %** | [rebuilt] | all 16,211 windows | `scripts/04_verify_golden.py` | `artifacts/int8_export/verification_full.json` | `python scripts/04_verify_golden.py` |
+| INT8 max \|logit\| difference | 1.3486 | [rebuilt] | n=2,048 | `scripts/03_export_int8.py` | `artifacts/int8_export/verification.json` | same |
 
 ### 2.1 Reconciling 0.9865 and 0.9184
 
@@ -127,7 +228,7 @@ Honest presentation:
 
 | Branch | Dataset | Groups | Honest metric | Fault authority (§1.1) | Status |
 |---|---|---|---|---|---|
-| S5 `bearing` | D1 Paderborn | 29 bearings | 0.7944 macro-F1 (LOBO) | **may raise Fault** | frozen |
+| S5 `bearing` | D1 Paderborn | 29 bearings | **0.7852 macro-F1** (LOBO, rebuilt cache) | **may raise Fault** (29 ≥ 3 groups, 0.7852 ≥ 0.75) | frozen |
 | S4 `winding` | D2 KAIST | 3 motors | NOT RUN | NOT RUN | NOT RUN |
 | S1 `supply` | D4 Thomas | 2 motors | NOT RUN | **indicative** — fails the ≥3-group test | NOT RUN |
 | S2/S3 `inverter_telemetry` | D3 Bacha | 1 run/condition | NOT RUN | **indicative** — fails the ≥3-group test | NOT RUN |
@@ -148,7 +249,7 @@ Honest presentation:
 
 | Number | Why not |
 |---|---|
-| 99.2 % / 0.9927 / 0.9920 as an **accuracy** | `verification_full.json` figures are training-set accuracies — the deployment model trained on all 16,127 windows. Quote `argmax_agreement` instead. |
+| 99.2 % / 0.9922 / 0.9915 as an **accuracy** | `verification_full.json` figures are training-set accuracies — the deployment model trained on all 16,211 windows. Quote `argmax_agreement` instead. |
 | 0.9865 or 0.9184 without the **(leaky reference)** label | Both are random window splits over near-identical windows of the same recordings. |
 | "Verdict within a single AC cycle" | Replaced by "per-trip verdict with evidence accumulation" (`docs/workflow_v2.md` §12). |
 | Any D2 claim of f/f_e **invariance** | f_e ≡ 200.00 Hz across all 48 D2 recordings; the axis is a fixed rescale on this dataset (§13.8). |
