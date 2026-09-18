@@ -315,7 +315,7 @@ def test_load_never_hardcodes_channel_names():
            if e["rating_w"] == 3000 and e["fault_type"] == "intercoil"
            and e["severity_pct"] == 7.12]
     assert len(ent) == 1
-    names, data, _, _ = K._read_tdms(ent[0]["current_path"], "A")
+    names, data, _, _, _ = K._read_tdms(ent[0]["current_path"], "A")
     assert len(data) == 3
     assert all("cDAQ5Mod1" in n for n in names)
     assert [n.split("/")[-1] for n in names] == ["ai0", "ai1", "ai3"]

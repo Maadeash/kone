@@ -675,3 +675,39 @@ entirely on the macro-F1 ≥ 0.75 test, measured in (d).
 | Vibration modality | Loaded and cached, but **not used** by the B-S4 feature set (current only, per `workflow_v2.md` §5). Retained for the batch-control cross-check. |
 | Per-channel gain calibration constants | Computed per file at adapter load; recorded in `provenance`. Not yet cross-checked against a second time window in the same recording. |
 | Severity as % of turns short-circuited | Taken from the Mendeley description. Not independently verifiable from the files. |
+
+---
+
+## 13. Outcome of the B-S4 branch (P1, 2026-09-18)
+
+Numbers are generated into `docs/results_multistage.md` from
+`artifacts/multistage/winding/winding_results.json`. Summary, with the reading:
+
+| Protocol | Scheme | Accuracy | Baseline |
+|---|---|---|---|
+| V1 | leave-one-motor-out, 3 folds | **0.3784** | 0.5020 |
+| V5 | leave-one-session-out, 2 scored folds | **0.6251** | 0.5975 |
+| V3 **(leaky reference)** | shuffled windows | 0.9990 | 0.5020 |
+| — | **session-only baseline** (1-NN on `i0rel_residual`) | **0.750** | 0.500 |
+
+**V1 is below its own majority baseline.** Nothing transfers across motors; all three
+folds land between 0.30 and 0.42 against a ~0.51 baseline.
+
+**V5 clears its baseline by 2.8 points and is beaten by a single scalar.** A 1-NN on
+`i0rel_residual` — zero by Kirchhoff, so incapable of containing winding information —
+reaches 0.750 on the same task. Under the reporting rule for this branch, that means
+**V5 does not demonstrate winding diagnosis**.
+
+**V3 at 0.9990 is the measure of how much a leaky split flatters this dataset**: 37
+points above V5, on the same features and the same model.
+
+Fusion: **INDICATIVE**. 2 scored validation groups against a floor of 3, and macro-F1
+0.6250 against a floor of 0.75 — fails both. The floor was pre-registered before any
+multi-stage branch existed and has not been adjusted.
+
+`healthy` is **NOT MEASURABLE** and no number is reported for it.
+
+**What this section is for.** The B-S4 deliverable is not a winding classifier — the
+dataset cannot support one. It is the confound analysis in §7A–7D, which is
+reproducible, independently verified from four metadata signals, and generalises to
+anyone else using this dataset.

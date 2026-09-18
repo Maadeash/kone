@@ -159,6 +159,84 @@ Disagreements concentrate on the known-hard specimens — `KI05` 6, `K002` 3, `K
 These are the same bearings the LOBO sweep fails on, which is what you would expect:
 INT8 and float disagree where the float model's own logits are closest together.
 
+### 1.5 Post-hoc protocol change: V5 leave-one-session-out (B-S4)
+
+| Field | Value |
+|---|---|
+| **Decided at** | **2026-09-18**, after the `i0rel_residual` probe |
+| Repo state at decision | `3c2a6d0` (the commit that recorded the probe) |
+| Protocol added | **V5 — leave-one-session-out** over the three D2 acquisition days |
+| Authority | user instruction, this session |
+
+**This is a protocol chosen after seeing data, and it is declared as such.** The
+pre-registered B-S4 protocol set (`workflow_v2.md` §5) was V1 leave-one-motor-out,
+V2 lowest-severity holdout, V3 shuffled reference. V5 was added later.
+
+**The reason it was added.** A 1-NN probe on `i0rel_residual` — a scalar that is zero
+by Kirchhoff in a three-wire machine and therefore cannot contain winding information —
+recovered the acquisition session at 1.000 on the 1000/1500 W recordings, and recovered
+70 % of the fault label with it. Leave-one-motor-out does not hold session out, so V1
+alone cannot distinguish winding diagnosis from session identification.
+
+**Why adding it is not the same as tuning on test.** V5 was defined *before* any B-S4
+model was fitted — no fault-class number existed when the protocol was chosen. The
+grouping is also not a free parameter: it is the acquisition date read from the TDMS
+`Date Created` property, corroborated independently by DAQ chassis, recording-duration
+discipline and root-name convention (four signals, one partition, `data_notes_d2.md`
+§7D). Nothing about the split was selected to improve a score.
+
+**What would make this illegitimate, and did not happen:** choosing the grouping to
+maximise a metric, trying several groupings and keeping the best, or defining V5 after
+seeing V1's result. V1 and V5 were run in the same invocation of
+`scripts/branches/10_winding.py`, from one cached feature matrix.
+
+**How to read V1 and V5 together.** V1 answers "does this transfer to a new motor",
+V5 answers "does it transfer to a new acquisition session". Both are reported; the gap
+between them is itself the result (§3.2).
+
+### 1.6 Correction: five residual groups nesting in three days, not six sessions
+
+An earlier statement in this session — and in an instruction issued from it — held that
+the `i0rel_residual` analysis resolved **six** acquisition sessions. **That was wrong.**
+
+The correct structure is **five residual-derived groups nesting inside three
+acquisition days**:
+
+| Day | Residual-derived groups | n |
+|---|---|---|
+| 2022-01-25 | `cDAQ1Mod2 (+,+,+)`, `cDAQ1Mod2 (+,-,-)` high-residual | 7 + 11 |
+| 2022-03-08 | `cDAQ1Mod2 (+,+,-)`, `cDAQ1Mod2 (+,-,-)` low-residual | 8 + 12 |
+| 2022-08-11 | `cDAQ5Mod1 (+,+,+)` | 7 |
+
+The error was double-counting: the 12/11 split inside the `(+,-,-)` polarity group was
+counted as a sixth group, when the five batch keys already encoded it through the
+root-name style.
+
+**The metadata verification is what caught it**, which is the argument for doing the
+verification rather than trusting the probe. V5 groups by the three **days**, not by the
+five residual groups — the days are what the metadata independently establishes.
+
+### 1.7 B-S4 fusion status: INDICATIVE
+
+| Field | Value |
+|---|---|
+| Protocol used for the decision | **V5** (leave-one-session-out) |
+| Validation groups scored | **2** — floor is **3** |
+| Honest macro-F1 | **0.6250** — floor is **0.75** |
+| **Status** | **INDICATIVE — no `Fault` authority** |
+
+**Fails both tests of the pre-registered floor** (§1.1, fixed 2026-09-18T07:19:23Z at
+commit `7344a436`, before any multi-stage branch existed). The floor has **not** been
+adjusted, and must not be.
+
+Groups scored is 2 rather than 3 because the 2022-08-11 session contains only
+`inter_coil` recordings (7/0) and cannot score a two-class task. It remains in training
+for the other folds.
+
+Consequence for `drivesentinel/fusion.py` and the dashboard: B-S4 may raise `Warning`
+and contribute to the evidence string, but may never raise `Fault` on its own. Its
+waveform and spectrum panels stay live — an indicative branch is displayed, not hidden.
+
 ---
 
 ## 2. Bearing pipeline (S5, frozen)
@@ -229,7 +307,7 @@ Honest presentation:
 | Branch | Dataset | Groups | Honest metric | Fault authority (§1.1) | Status |
 |---|---|---|---|---|---|
 | S5 `bearing` | D1 Paderborn | 29 bearings | **0.7852 macro-F1** (LOBO, rebuilt cache) | **may raise Fault** (29 ≥ 3 groups, 0.7852 ≥ 0.75) | frozen |
-| S4 `winding` | D2 KAIST | 3 motors | NOT RUN | NOT RUN | NOT RUN |
+| S4 `winding` | D2 KAIST | **2 sessions scored** (3 days, 1 degenerate) | **0.6250** macro-F1 (V5, leave-one-session-out) | **INDICATIVE** — fails both floor tests | inter_coil vs inter_turn only; `healthy` NOT MEASURABLE |
 | S1 `supply` | D4 Thomas | 2 motors | NOT RUN | **indicative** — fails the ≥3-group test | NOT RUN |
 | S2/S3 `inverter_telemetry` | D3 Bacha | 1 run/condition | NOT RUN | **indicative** — fails the ≥3-group test | NOT RUN |
 | B-SIM `inverter_waveform` | simulator | — | NOT RUN | out of MVP (§13.8) | NOT RUN |
@@ -244,6 +322,39 @@ Honest presentation:
 | **D4 label-alignment validation** — reconstructed 1000/500 sliding-window labels vs measured phase-current collapse boundaries | §13.3. If validation fails, the current-collapse rule stands alone and that must be stated. | NOT RUN |
 
 ---
+
+### 3.2 B-S4 winding — every number
+
+Task is **inter_coil vs inter_turn**. `healthy` is **NOT MEASURABLE** on this dataset
+under any session-aware split (all three healthy recordings are from 2022-01-25) and no
+number is reported for it anywhere.
+
+| Claim | Value | Protocol | Recorded in |
+|---|---|---|---|
+| **V5 accuracy** | **0.6251** | leave-one-session-out, 2 scored folds | `artifacts/multistage/winding/winding_results.json` -> `V5.pooled` |
+| **V5 macro-F1** | **0.6250** | same | same |
+| V5 majority baseline | 0.5975 | same | same |
+| V1 accuracy | 0.3784 | leave-one-motor-out, 3 folds | -> `V1.pooled` |
+| V1 macro-F1 | 0.3456 | same | same |
+| V1 majority baseline | 0.5020 | same | same |
+| Accuracy **(leaky reference)** | 0.9990 | shuffled windows | -> `V3.pooled` |
+| **Session-only baseline** | **0.750** | 1-NN on `i0rel_residual`, 1000/1500 W | -> `V4_probe.subsets.1000W_1500W_only` |
+| Session from features **(leaky reference)** | 0.9996 | shuffled windows | -> `V4.targets` |
+
+Regenerate: `python scripts/branches/10_winding.py --rebuild`
+(~2 min), then `python scripts/60_render_multistage_results.py`.
+
+**How to read these.** V1 (0.3784) is **below its 0.5020
+majority baseline** — nothing transfers across motors. V5 (0.6251) is barely
+above its 0.5975 baseline, and **below the 0.750 that a single
+winding-independent scalar achieves**. Under the reporting rule agreed for this branch, a
+fault-class score that does not clearly beat the session-only baseline is **not
+demonstrating winding diagnosis**, and V5 does not beat it.
+
+The comparison is directional rather than exact: the session-only probe is per-recording
+(n=28) and V5 is per-window (n=10,463), so they are not a like-for-like contest. The
+conclusion does not rest on the margin — it rests on V1 sitting below chance and V5
+sitting below a scalar that cannot contain winding information.
 
 ## 4. Claims that must never appear
 

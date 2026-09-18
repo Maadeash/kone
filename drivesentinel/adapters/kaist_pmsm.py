@@ -313,6 +313,16 @@ def assert_ratio_only(name: str) -> None:
 # reading
 # ===========================================================================
 
+# The three acquisition days, verified from TDMS `Date Created` and corroborated
+# by chassis, duration discipline and root-name style -- four independent signals
+# agreeing on the same partition.  See docs/data_notes_d2.md section 7D.
+#
+# This is the group axis for V5 (leave-one-session-out).  It is NOT the residual
+# clustering: the residual resolves five groups, and those five nest perfectly
+# inside these three days.  The days are the fact; the residual reveals them.
+SESSIONS = ("2022-01-25", "2022-03-08", "2022-08-11")
+
+
 def _read_tdms(path: str, want_unit: str):
     """Channels carrying `want_unit`, in file order, plus their properties."""
     from nptdms import TdmsFile
@@ -325,7 +335,8 @@ def _read_tdms(path: str, want_unit: str):
         props = dict(chans[0].properties)
         data = [np.asarray(ch[:], dtype=np.float64) for ch in chans]
         root = tf.properties.get("name")
-    return names, data, props, root
+        created = tf.properties.get("Date Created") or tf.properties.get("datetime")
+    return names, data, props, root, created
 
 
 def _file_digest(path: str, nbytes: int = 8_000_000) -> str:
@@ -449,7 +460,7 @@ def load(root: str = None, with_vibration: bool = False,
 
     out: List[Recording] = []
     for e in entries:
-        names, data, props, root_name = _read_tdms(e["current_path"], "A")
+        names, data, props, root_name, created = _read_tdms(e["current_path"], "A")
         if len(data) != 3:
             raise ValueError(f"{e['current_file']}: found {len(data)} current channels, "
                              f"expected 3 ({names})")
@@ -474,11 +485,18 @@ def load(root: str = None, with_vibration: bool = False,
         units = {n: CURRENT_UNIT for n in PHASE_NAMES}
 
         if with_vibration and e.get("vibration_path"):
-            vnames, vdata, vprops, _ = _read_tdms(e["vibration_path"], "g")
+            vnames, vdata, vprops, _, _ = _read_tdms(e["vibration_path"], "g")
             signals["vib"] = vdata[0].astype(np.float32)
             fs["vib"] = FS_VIBRATION
             units["vib"] = VIBRATION_UNIT
 
+        session = str(created)[:10] if created is not None else "unknown"
+        if session not in SESSIONS:
+            raise ValueError(
+                f"{e['current_file']}: acquisition date {session!r} is not one of "
+                f"the three known sessions {SESSIONS}. The session grouping in "
+                f"data_notes_d2.md section 7D no longer holds -- re-verify before loading."
+            )
         chassis = names[0].split("/")[0] if "/" in names[0] else "unknown"
         style = _root_style(root_name)
         batch = f"{chassis}|{''.join('+' if s > 0 else '-' for s in signs)}|{style}"
@@ -499,6 +517,7 @@ def load(root: str = None, with_vibration: bool = False,
                 # Exposed, not hidden: these are what V4 predicts instead of the
                 # fault class, and what the 3000 W confound is made of.
                 "batch": batch,
+                "session": session,
                 "daq_chassis": chassis,
                 "root_style": style,
             },
@@ -507,6 +526,7 @@ def load(root: str = None, with_vibration: bool = False,
                 "vibration_file": e.get("vibration_file"),
                 "channels_found": names,
                 "root_name": root_name,
+                "date_created": str(created),
                 "units_declared": props.get("unit_string"),
                 "units_actual": CURRENT_UNIT,
                 "units_note": (
