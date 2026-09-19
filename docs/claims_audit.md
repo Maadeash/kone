@@ -362,6 +362,111 @@ the fold so a replay spans the whole recording set rather than its first seconds
 Metrics shown on the cards come from the **full** fold, not from the stored subset;
 `n_windows_in_fold` and `n_windows_stored` are both recorded in each NPZ.
 
+### 1.11 B-S1 supply: a rule, not a model, and why (P2, 2026-09-19)
+
+**The deliverable is a documented threshold rule.** D4 has one recording per
+(motor × class) and two motors, so under leave-one-motor-out a learned model sees
+one training example per class — it separates two 20 s captures rather than
+learning phase loss. Liu et al. measure exactly that on this dataset: macro-F1
+0.9682 under a random split, 0.5856 under a within-label block split.
+
+**The rule:** a phase is LOST in a window when its 0.2 s RMS falls below 5 % of
+the median of the other two. A window is OFF when every phase is below 0.05 A, and
+OFF windows are excluded from scoring. `phase_loss_running` is separated from
+`single_phasing_start` by **rotation** (vib_x RMS above 0.005), not by current —
+the two look nearly identical electrically, and measured vibration separates them
+by a factor of ~20 (stalled 0.0008–0.0012, rotating 0.017–0.041).
+
+| Protocol | Scheme | Accuracy | Macro-F1 |
+|---|---|---|---|
+| **R2 — the rule** | leave-one-motor-out | **1.0000** | **1.0000** |
+| L1 — learned | leave-one-motor-out | 0.6593 | 0.6394 |
+| L3 — learned **(leaky reference)** | shuffled windows | 0.9983 | 0.9981 |
+
+**34 points** separate the learned model's leaky and honest splits, on the same
+features. The rule is unaffected because nothing in it is fitted.
+
+Detection latency per event: FILE 2 **0.10 s**, FILE 5 **0.30 s**, FILE 7
+**0.00 s**, FILE 10 **1.50 s**. Measured against an amplitude crossing independent
+of the rule's own threshold, and floored by the 0.1 s hop.
+
+#### Correction: the threshold's sensitivity is narrower than first claimed
+
+The first draft of `branches/supply.py` asserted that "anything between 1 % and
+30 % gives the same answer". **That was wrong**, and measuring it is what caught
+it:
+
+| Level | Safe range | Evidence |
+|---|---|---|
+| **Recording verdict** (what the branch reports) | **0.03 – 0.40**, 10/10 throughout | at 0.02 it loses FILE 2; at 0.01 it loses FILE 2 and FILE 7 |
+| Window classification | **0.048 – 0.053** only | worst real lost-phase ratio 0.0476 (FILE 10); tightest normal-window ratio 0.0526 (FILE 5) |
+
+Both window-level bounds come from the same few windows — those straddling the
+instant a phase dies. A 0.2 s window spanning the transition contains both states
+and its RMS lands between them. That is an artefact of the window length, not a
+property of the fault, and it is why the branch reports a recording-level verdict
+requiring a ≥ 0.5 s event rather than trusting individual windows.
+
+**Do not quote the window-level margin as if it had the recording-level margin.**
+Both numbers are in the module docstring and asserted in
+`tests/test_supply_features.py`.
+
+### 1.12 D4 label vector: reconstructed, not validated, not used
+
+The paper describes a 1000-sample window at step 500 over the ten files merged in
+order. That reconstruction was tested against the phase-current collapse
+boundaries measured here:
+
+| Check | Result |
+|---|---|
+| Label-run boundaries coinciding with a **file** boundary at 1998 windows/file | **6 of 14** |
+| Same, at 1999 windows/file | 1 of 14 |
+| Label-run boundaries coinciding with a **measured phase-loss event** | **0 of 4** |
+
+So the per-file window count is probably 1998 and the file structure
+reconstructs — but the within-file event structure does not match anything
+measurable in the currents.
+
+**The label vector is therefore not used.** Labels come from the current-collapse
+rule, which was primary either way. The disagreement is recorded rather than
+resolved by assumption, and `adapters/thomas_motor.py` sets
+`provenance["label_vector_used"] = False` on every recording.
+
+### 1.13 B-S1 fusion status: INDICATIVE, at macro-F1 1.0000
+
+| Field | Value |
+|---|---|
+| Protocol | R2, threshold rule, leave-one-motor-out |
+| Validation groups | **2** — floor is **3** |
+| Honest macro-F1 | **1.0000** — floor is 0.75 |
+| **Status** | **INDICATIVE — no `Fault` authority** |
+
+**A perfect score still does not earn `Fault` authority**, because two motors is
+below the pre-registered group minimum. The floor was fixed 2026-09-18T07:19:23Z
+at commit `7344a436`, before any multi-stage branch existed, and §1.1 recorded the
+expectation "S1 supply — 2 motors — **fails the group test** → indicative" at that
+time. It has not been adjusted.
+
+This is the floor working as intended: a branch can be perfectly right about the
+recordings it has and still not be trusted to condemn a drive alone, because two
+machines cannot tell you how the rule behaves on a third.
+
+### 1.14 D4 bearing confound: a documented negative result
+
+Predicting **motor identity** from the same features scores **0.9983** against a
+0.5049 baseline under a shuffled split.
+
+That number is not a bearing-fault capability and must never be quoted as one.
+D4 has exactly one motor per bearing condition, so "outer-race fault" and "motor
+identity" are the same variable; nothing distinguishes a bearing defect from any
+other difference between two physical machines — winding tolerances, mounting,
+alignment, age. Vibration is measurably 1.6–2.3× higher on the faulty motor across
+every matched scenario pair, and that measurement cannot be attributed to the
+bearing.
+
+Stated once in `adapters/thomas_motor.py::bearing_confound_note()` and quoted from
+there everywhere it appears, so the wording cannot drift.
+
 ---
 
 ## 2. Bearing pipeline (S5, frozen)
@@ -433,7 +538,7 @@ Honest presentation:
 |---|---|---|---|---|---|
 | S5 `bearing` | D1 Paderborn | 29 bearings | **0.7852 macro-F1** (LOBO, rebuilt cache) | **may raise Fault** (29 ≥ 3 groups, 0.7852 ≥ 0.75) | frozen |
 | S4 `winding` | D2 KAIST | **2 sessions scored** (3 days, 1 degenerate) | **0.6250** macro-F1 (V5, leave-one-session-out) | **INDICATIVE** — fails both floor tests | inter_coil vs inter_turn only; `healthy` NOT MEASURABLE |
-| S1 `supply` | D4 Thomas | 2 motors | NOT RUN | **indicative** — fails the ≥3-group test | NOT RUN |
+| S1 `supply` | D4 Thomas | **2 motors** | **1.0000** macro-F1 (R2, threshold rule) | **INDICATIVE** — 2 groups < 3, as predicted | threshold rule, not a learned model |
 | S2/S3 `inverter_telemetry` | D3 Bacha | 1 run/condition | NOT RUN | **indicative** — fails the ≥3-group test | NOT RUN |
 | B-SIM `inverter_waveform` | simulator | — | NOT RUN | out of MVP (§13.8) | NOT RUN |
 

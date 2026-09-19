@@ -168,6 +168,17 @@ with left:
         st.line_chart(spec[i, ch], height=190)
         st.caption(f"Order spectrum, {spec.shape[2]} bins over 0–{C.ORDER_MAX:g} "
                    f"shaft orders. This is what the model sees.")
+    elif "rms" in sc:
+        rms = np.asarray(sc["rms"])
+        t = np.asarray(sc["t"])
+        st.line_chart({f"I{k+1}": rms[:, k] for k in range(rms.shape[1])}, height=190)
+        lost = int(sc["lost_phase"])
+        st.caption(
+            f"Per-phase 0.2 s RMS. Phase **I{lost+1}** collapses at "
+            f"{float(sc['event_t0']):.1f} s and recovers at "
+            f"{float(sc['event_t1']):.1f} s. The rule flags a phase lost when its "
+            f"RMS falls below 5 % of the median of the other two — detection "
+            f"latency **{float(sc['latency_s']):.2f} s**.")
     elif "neg_seq_ratio" in sc:
         st.line_chart(np.asarray(sc["neg_seq_ratio"]), height=190)
         st.caption("Negative-sequence ratio per window, ordered by severity. "
@@ -229,6 +240,14 @@ if view:
         f"<div style='font-family:monospace;font-size:0.9em;margin-top:6px'>"
         f"{view['evidence']}</div></div>", unsafe_allow_html=True)
     a, b = st.columns([3, 2])
+    # Peak status reached during the replay, not just the final one. A fault
+    # that occurs and then clears -- FILE 2's phase loss recovers after 10 s --
+    # ends the replay at Normal, and without this a judge would see only the
+    # final state and miss that the branch fired at all.
+    peak = FU.worst(view["status"])
+    if peak != sysview["status"]:
+        st.caption(f"Peak status during this replay: **{peak}** "
+                   f"(the event occurred and then cleared — see the trace).")
     a.line_chart({"p_fault": view["p_fault"]}, height=170)
     a.caption(f"Rolling mean over {C.FUSION_CONFIG['rolling_window']} windows. "
               f"Fault needs p_fault ≥ {C.FUSION_CONFIG['tau_fault']} for "
@@ -262,6 +281,19 @@ if view:
         else:
             b.warning(f"**FALSE ALARM.** Bearing is **{truth_label}**; system "
                       f"says **{sysview['status']}**.", icon="⚠️")
+        b.caption(str(sc["note"]))
+    elif str(sc.get("branch")) == "supply":
+        b.metric("Motor", f"{sc['motor']} — {sc['scenario_name']}")
+        b.metric("True label", str(sc["true_label"]))
+        b.metric("Rule verdict", str(sc["verdict"]))
+        b.metric("Detection latency", f"{float(sc['latency_s']):.2f} s")
+        if str(sc["verdict"]) == str(sc["true_label"]):
+            b.success("Rule verdict correct", icon="✅")
+        else:
+            b.error("Rule verdict WRONG", icon="🚨")
+        b.info("**Threshold rule, not a learned model.** Nothing is fitted to any "
+               "recording, so there is nothing to hold out — `out_of_sample` is "
+               "False by construction, not by omission.", icon="📏")
         b.caption(str(sc["note"]))
 else:
     st.info("Select a scenario with per-window probabilities to see fusion.")

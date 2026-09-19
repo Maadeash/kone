@@ -1,5 +1,5 @@
 {
-  "built": "2026-09-19T10:25:49Z",
+  "built": "2026-09-19T10:45:39Z",
   "scenarios": [
     {
       "id": "winding_severity_ramp_1000W",
@@ -52,12 +52,16 @@
       "mb": 1.08
     },
     {
-      "id": "supply_phase_loss",
+      "id": "supply_phase_loss_FILE2",
       "stage": "S1",
       "branch": "supply",
-      "file": null,
-      "status": "SKIPPED",
-      "reason": "B-S1 branch not implemented; no adapter, no rule, no results JSON"
+      "file": "supply_phase_loss_FILE2.npz",
+      "out_of_sample": false,
+      "deliverable": "threshold rule",
+      "true_label": "phase_loss_running",
+      "verdict": "phase_loss_running",
+      "latency_s": 0.1,
+      "mb": 0.01
     },
     {
       "id": "inverter_open_circuit",

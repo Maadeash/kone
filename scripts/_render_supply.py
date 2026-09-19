@@ -1,0 +1,108 @@
+"""
+Supply-branch section for docs/results_multistage.md.
+
+Split out of 60_render_multistage_results.py only because it is long; it is
+imported by that script and is not a separate entry point.
+"""
+
+
+def render_supply(r, fmt):
+    L = []
+    L.append(f"**Task: {r['task']}.** Deliverable: **{r['deliverable']}**.")
+    L.append("")
+    L.append(f"> {r['rule_statement']}")
+    L.append("")
+    L.append("### Why a rule and not a learned model")
+    L.append("")
+    L.append(f"> {r['why_not_learned']}")
+    L.append("")
+
+    L.append("### R1 — the rule, every recording")
+    L.append("")
+    L.append("| File | Motor | Scenario | True | Rule verdict | Latency |")
+    L.append("|---|---|---|---|---|---|")
+    for rec in r["R1_rule_per_recording"]["recordings"]:
+        lat = rec.get("latency_s")
+        ok = "✅" if rec["verdict"] == rec["true_label"] else "❌"
+        lat_txt = "—" if lat is None else f"{lat:.2f} s"
+        L.append(f"| `{rec['file']}` | {rec['motor']} | {rec['scenario']} "
+                 f"| {rec['true_label']} | {ok} {rec['verdict']} | {lat_txt} |")
+    sc = r["R1_rule_per_recording"]["scores"]
+    L.append("")
+    L.append(f"**{round(sc['accuracy'] * sc['n'])}/{sc['n']} recordings correct** — "
+             f"accuracy {fmt(sc['accuracy'])}, macro-F1 {fmt(sc['macro_f1'])}, "
+             f"baseline {fmt(sc['majority_baseline'])}.")
+    L.append("")
+    lat = r["detection_latency"]
+    L.append(f"Detection latency is measured against an amplitude crossing "
+             f"independent of the rule's own threshold, and cannot be better than "
+             f"the {lat['hop_s']} s hop.")
+    L.append("")
+
+    L.append("### R2 vs L1 vs L3 — the protocol is the whole story")
+    L.append("")
+    L.append("| Protocol | Scheme | Accuracy | Macro-F1 | Baseline |")
+    L.append("|---|---|---|---|---|")
+    p2 = r["R2_rule_leave_one_motor_out"]["pooled"]
+    L.append(f"| **R2 rule** | leave-one-motor-out | **{fmt(p2['accuracy'])}** "
+             f"| **{fmt(p2['macro_f1'])}** | {fmt(p2['majority_baseline'])} |")
+    l1 = r["L1_learned_leave_one_motor_out"]["pooled"]
+    L.append(f"| L1 learned | leave-one-motor-out | {fmt(l1['accuracy'])} "
+             f"| {fmt(l1['macro_f1'])} | {fmt(l1['majority_baseline'])} |")
+    l3 = r["L3_learned_shuffled_LEAKY"]["pooled"]
+    L.append(f"| L3 learned **(leaky reference)** | shuffled windows "
+             f"| {fmt(l3['accuracy'])} | {fmt(l3['macro_f1'])} "
+             f"| {fmt(l3['majority_baseline'])} |")
+    L.append("")
+    gap = (l3["accuracy"] - l1["accuracy"]) * 100
+    L.append(f"The learned model drops from {fmt(l3['accuracy'])} under a leaky "
+             f"split to {fmt(l1['accuracy'])} under leave-one-motor-out — a gap of "
+             f"**{gap:.0f} points** on the same features. The rule, which has "
+             f"nothing fitted to any recording, is unaffected by the split.")
+    L.append("")
+
+    n1 = r["N1_bearing_confound"]
+    L.append("### N1 — bearing confound, a documented NEGATIVE RESULT")
+    L.append("")
+    L.append(f"Predicting **motor identity** from the same features scores "
+             f"**{fmt(n1['scores']['accuracy'])}** against a baseline of "
+             f"{fmt(n1['scores']['majority_baseline'])}.")
+    L.append("")
+    L.append(f"> {n1['statement']}")
+    L.append("")
+
+    lr = r["label_reconstruction"]
+    L.append("### Label vector — reconstructed, not validated, not used")
+    L.append("")
+    L.append(f"The paper's 1000-sample / step-500 reconstruction was tested against "
+             f"the measured phase-current collapse boundaries: "
+             f"**{lr['file_boundary_hits']}** label-run boundaries coincide with a "
+             f"file boundary at {lr['windows_per_file']} windows per file, and "
+             f"**{lr['event_boundary_hits']}** coincide with a measured phase-loss "
+             f"event.")
+    L.append("")
+    L.append("The file structure reconstructs; the within-file event structure does "
+             "not. **Labels come from the collapse rule instead**, which was the "
+             "primary source either way.")
+    L.append("")
+
+    fu = r["fusion"]
+    L.append("### Fusion authority")
+    L.append("")
+    L.append("| Field | Value |")
+    L.append("|---|---|")
+    L.append(f"| Protocol used | {fu['protocol_used']} |")
+    L.append(f"| Validation groups | {fu['n_validation_groups']} "
+             f"(floor: {fu['floor']['min_validation_groups']}) |")
+    L.append(f"| Honest macro-F1 | {fmt(fu['honest_macro_f1'])} "
+             f"(floor: {fu['floor']['min_macro_f1']}) |")
+    L.append(f"| **Status** | **{fu['status']}** |")
+    L.append("")
+    L.append(f"**A perfect macro-F1 of {fmt(fu['honest_macro_f1'])} still does not "
+             f"earn `Fault` authority**, because two motors is below the "
+             f"pre-registered minimum of {fu['floor']['min_validation_groups']} "
+             f"validation groups. The floor was fixed before this branch existed and "
+             f"has not been adjusted. This is the floor working as intended: a "
+             f"branch can be perfectly right and still not be trusted alone.")
+    L.append("")
+    return L

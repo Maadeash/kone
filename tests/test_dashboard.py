@@ -82,8 +82,22 @@ def test_unmeasured_stages_are_shown_not_hidden():
     """Never hide a stage: an empty one is more honest than a missing one."""
     rows = {r["stage"]: r for r in P.stage_rows(FU.load_branch_metrics())}
     assert "S1" in rows and "S2" in rows
-    assert rows["S1"]["badge"] == "NOT MEASURED"
-    assert rows["S1"]["metric_line"]          # still says something
+    assert rows["S2"]["badge"] == "NOT MEASURED"
+    assert rows["S2"]["metric_line"]          # still says something
+
+
+def test_supply_stage_is_indicative_at_a_perfect_score():
+    """
+    B-S1 scores macro-F1 1.0000 and is still INDICATIVE, because two motors is
+    below the pre-registered three-group minimum. If this ever reads
+    Fault-capable, the floor has been moved.
+    """
+    rows = {r["branch"]: r for r in P.stage_rows(FU.load_branch_metrics())}
+    if not rows["supply"]["measured"]:
+        pytest.skip("supply_results.json absent")
+    assert rows["supply"]["badge"] == "INDICATIVE"
+    assert rows["supply"]["can_fault"] is False
+    assert "1.0000" in rows["supply"]["metric_line"]
 
 
 def test_stage_row_metric_line_names_the_protocol():
@@ -94,7 +108,7 @@ def test_stage_row_metric_line_names_the_protocol():
 
 def test_status_defaults_to_not_measured_for_absent_branches():
     rows = {r["branch"]: r for r in P.stage_rows(FU.load_branch_metrics())}
-    assert rows["supply"]["status"] == "NOT MEASURED"
+    assert rows["inverter_telemetry"]["status"] == "NOT MEASURED"
 
 
 # ---------------------------------------------------------------------------
@@ -132,8 +146,18 @@ def test_winding_card_says_healthy_is_not_measurable():
 
 def test_unmeasured_card_has_no_metric_and_says_why():
     cards = {c["branch"]: c for c in P.metric_cards(FU.load_branch_metrics())}
-    assert cards["supply"]["metric"] is None
-    assert cards["supply"]["note"]
+    assert cards["inverter_telemetry"]["metric"] is None
+    assert cards["inverter_telemetry"]["note"]
+
+
+def test_supply_scenario_declares_it_is_a_rule_not_a_model():
+    man = P.load_manifest()
+    sup = [s for s in man["scenarios"] if s.get("branch") == "supply" and s.get("file")]
+    if not sup:
+        pytest.skip("supply scenario not built")
+    assert sup[0]["deliverable"] == "threshold rule"
+    assert sup[0]["out_of_sample"] is False       # nothing fitted, nothing to hold out
+    assert sup[0]["verdict"] == sup[0]["true_label"]
 
 
 # ---------------------------------------------------------------------------

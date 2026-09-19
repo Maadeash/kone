@@ -32,7 +32,9 @@ SCENARIOS
   (b) S5 bearing: one recording per chosen bearing, replayed through the fold
       model that excluded it.  Includes a bearing the model FAILS on, because a
       demo that only shows successes is a worse demo.
-  (c) S1 supply: SKIPPED -- the B-S1 branch does not exist yet.
+  (c) S1 supply: D4 phase loss, replayed through the THRESHOLD RULE. There is no
+      model to hold anything out of, so it is not marked out-of-sample -- the
+      rule has no parameters fitted to any recording and the scenario says so.
   (d) S2/S3 inverter: NOT MEASURED -- no results JSON.
 """
 
@@ -202,6 +204,71 @@ def build_winding_ramp(motor: str = "1000W"):
 
 
 # ===========================================================================
+# (c) supply -- the threshold rule on a real phase-loss event
+# ===========================================================================
+
+def build_supply(file_no: int = 2, decimate: int = 25):
+    """
+    Replay a real phase-loss event through the rule.
+
+    Stores the three per-phase RMS tracks, the per-window verdict and the
+    measured detection latency. `out_of_sample` is False and that is not a
+    weakness: the rule has no fitted parameters, so there is nothing to hold
+    out. The scenario records `deliverable="threshold rule"` so the dashboard
+    does not imply a model where there is none.
+    """
+    from drivesentinel.adapters import thomas_motor as T
+    from drivesentinel.branches import supply as SUP
+
+    try:
+        recs = T.load(limit=None)
+    except FileNotFoundError:
+        return None
+    rec = next((r for r in recs if r.condition["file_no"] == file_no), None)
+    if rec is None:
+        return None
+
+    verdicts = SUP.classify(rec)
+    ev = SUP.events(verdicts)
+    lat = SUP.detection_latency(verdicts)
+    states = [v.state for v in verdicts]
+
+    # Probability-like trace for the fusion replay: 1.0 on a fault window, 0 on
+    # normal. The rule is binary per window; smoothing is the fusion layer's job.
+    labels = list(SUP.LABELS)
+    probs = np.zeros((len(verdicts), len(labels)), dtype=np.float32)
+    for i, v in enumerate(verdicts):
+        probs[i, labels.index(v.state if v.state in labels else "normal")] = 1.0
+
+    d = max(1, decimate)
+    return dict(
+        scenario=f"supply_phase_loss_FILE{file_no}",
+        panel_title=f"S1 supply — phase loss, FILE {file_no} ({rec.condition['motor']} motor)",
+        stage="S1", branch="supply",
+        labels=np.asarray(labels),
+        probs=probs,
+        t=np.asarray([v.t for v in verdicts], dtype=np.float32),
+        rms=np.asarray([v.rms for v in verdicts], dtype=np.float32),
+        vib_rms=np.asarray([v.vib_rms for v in verdicts], dtype=np.float32),
+        states=np.asarray(states),
+        true_label=rec.label,
+        verdict=SUP.recording_verdict(verdicts),
+        motor=rec.condition["motor"],
+        scenario_name=rec.condition["scenario"],
+        lost_phase=int(ev[0]["phases"][0]) if ev and ev[0]["phases"] else -1,
+        event_t0=float(ev[0]["t0"]) if ev else float("nan"),
+        event_t1=float(ev[0]["t1"]) if ev else float("nan"),
+        latency_s=float(lat["latency_s"]) if lat else float("nan"),
+        out_of_sample=False,
+        deliverable="threshold rule",
+        note=("Replayed through the documented threshold rule, not a learned "
+              "model. A phase is lost when its 0.2 s RMS falls below 5 % of the "
+              "median of the other two. The rule has no parameters fitted to any "
+              "recording, so there is nothing to hold out."),
+    )
+
+
+# ===========================================================================
 # main
 # ===========================================================================
 
@@ -210,6 +277,8 @@ def main():
     ap.add_argument("--bearings", nargs="*", default=list(DEFAULT_BEARINGS))
     ap.add_argument("--skip-bearings", action="store_true")
     ap.add_argument("--motor", default="1000W")
+    ap.add_argument("--supply-file", type=int, default=2,
+                    help="D4 file to replay for scenario (c)")
     ap.add_argument("--max-windows", type=int, default=120,
                     help="windows stored per bearing scenario (metrics use the full fold)")
     a = ap.parse_args()
@@ -232,7 +301,26 @@ def main():
         print("  (a) winding ramp SKIPPED -- feature cache absent")
 
     # (b)
-    if not a.skip_bearings:
+    if a.skip_bearings:
+        # Keep whatever bearing scenarios are already on disk rather than
+        # silently dropping them from the manifest -- --skip-bearings means
+        # "do not retrain", not "pretend they do not exist".
+        for b in a.bearings:
+            p = os.path.join(OUT_DIR, f"bearing_{b}.npz")
+            if not os.path.exists(p):
+                continue
+            with np.load(p, allow_pickle=False) as z:
+                manifest["scenarios"].append({
+                    "id": f"bearing_{b}", "stage": "S5", "branch": "bearing",
+                    "file": os.path.basename(p), "out_of_sample": bool(z["out_of_sample"]),
+                    "bearing": b, "true_label": str(z["true_label"]),
+                    "window_acc": float(z["window_acc"]),
+                    "n_windows_stored": int(z["n_windows_stored"]),
+                    "n_windows_in_fold": int(z["n_windows_in_fold"]),
+                    "n_train_bearings": int(z["n_train_bearings"]),
+                    "mb": round(os.path.getsize(p) / 1e6, 2)})
+            print(f"  (b) bearing_{b:<30} kept (not retrained)")
+    else:
         import torch
         from drivesentinel.features import load_cache
         from drivesentinel.train import get_device
@@ -256,16 +344,29 @@ def main():
             print(f"  (b) {s['scenario']:38} {os.path.getsize(p)/1e6:5.2f} MB  "
                   f"acc {s['window_acc']:.4f}  out-of-sample OK  ({s['seconds']}s)")
 
-    # (c) and (d)
-    manifest["scenarios"].append({
-        "id": "supply_phase_loss", "stage": "S1", "branch": "supply",
-        "file": None, "status": "SKIPPED",
-        "reason": "B-S1 branch not implemented; no adapter, no rule, no results JSON"})
+    # (c)
+    sup = build_supply(a.supply_file)
+    if sup:
+        p = os.path.join(OUT_DIR, f"{sup['scenario']}.npz")
+        np.savez_compressed(p, **sup)
+        manifest["scenarios"].append({
+            "id": sup["scenario"], "stage": "S1", "branch": "supply",
+            "file": os.path.basename(p), "out_of_sample": False,
+            "deliverable": "threshold rule",
+            "true_label": str(sup["true_label"]), "verdict": str(sup["verdict"]),
+            "latency_s": float(sup["latency_s"]),
+            "mb": round(os.path.getsize(p) / 1e6, 2)})
+        print(f"  (c) {sup['scenario']:38} {os.path.getsize(p)/1e6:5.2f} MB  "
+              f"{sup['verdict']}  latency {sup['latency_s']:.2f}s")
+    else:
+        manifest["scenarios"].append({
+            "id": "supply_phase_loss", "stage": "S1", "branch": "supply",
+            "file": None, "status": "SKIPPED", "reason": "D4 not present"})
+        print("  (c) supply_phase_loss                    SKIPPED (D4 absent)")
     manifest["scenarios"].append({
         "id": "inverter_open_circuit", "stage": "S3", "branch": "inverter_telemetry",
         "file": None, "status": "NOT MEASURED",
         "reason": "no artifacts/multistage/inverter_telemetry/*.json"})
-    print("  (c) supply_phase_loss                    SKIPPED (branch not built)")
     print("  (d) inverter_open_circuit                NOT MEASURED (no results JSON)")
 
     mp = os.path.join(OUT_DIR, "manifest.json")

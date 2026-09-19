@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from drivesentinel import config as C
 from drivesentinel import fusion as FU
 from drivesentinel import trip as TR
+from scripts._render_supply import render_supply
 
 BRANCHES = [
     ("winding", "B-S4", "S4", "D2 KAIST PMSM"),
@@ -152,6 +153,8 @@ def main():
             r = json.load(fh)
         if slug == "winding":
             lines += render_winding(r)
+        elif slug == "supply":
+            lines += render_supply(r, fmt)
         else:
             lines += ["**NOT RUN**", ""]
         lines.append(f"_Source: `{os.path.relpath(path, C.PROJECT_ROOT)}`, "

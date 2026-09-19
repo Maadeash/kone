@@ -88,7 +88,69 @@ _Source: `artifacts\multistage\winding\winding_results.json`, 112.8 s._
 
 ## B-S1 `supply` — stage S1, D4 Thomas
 
-**NOT RUN**
+**Task: normal / phase_loss_running / single_phasing_start.** Deliverable: **documented threshold rule (not a learned model)**.
+
+> A phase is LOST in a window when its 0.2 s RMS falls below 5 % of the median of the other two. A window is OFF when every phase is below an absolute floor of 0.05 A, and OFF windows are excluded from scoring. phase_loss_running is separated from single_phasing_start by ROTATION (vib_x RMS above 0.005), not by current.
+
+### Why a rule and not a learned model
+
+> One recording per (motor x class) and two motors: under leave-one-motor-out a learned model sees one training example per class, so it separates two 20 s captures rather than learning phase loss. Liu et al. measure exactly this on this dataset: macro-F1 0.9682 random split, 0.5856 within-label block split.
+
+### R1 — the rule, every recording
+
+| File | Motor | Scenario | True | Rule verdict | Latency |
+|---|---|---|---|---|---|
+| `FILE 1.mat` | healthy | normal_no_load | normal | ✅ normal | — |
+| `FILE 2.mat` | healthy | phase_removal_running | phase_loss_running | ✅ phase_loss_running | 0.10 s |
+| `FILE 3.mat` | healthy | load_0.4Nm | normal | ✅ normal | — |
+| `FILE 4.mat` | healthy | load_0.8Nm | normal | ✅ normal | — |
+| `FILE 5.mat` | healthy | single_phasing_start | single_phasing_start | ✅ single_phasing_start | 0.30 s |
+| `FILE 6.mat` | faulty | normal_no_load | normal | ✅ normal | — |
+| `FILE 7.mat` | faulty | phase_removal_running | phase_loss_running | ✅ phase_loss_running | 0.00 s |
+| `FILE 8.mat` | faulty | load_0.4Nm | normal | ✅ normal | — |
+| `FILE 9.mat` | faulty | load_0.8Nm | normal | ✅ normal | — |
+| `FILE 10.mat` | faulty | single_phasing_start | single_phasing_start | ✅ single_phasing_start | 1.50 s |
+
+**10/10 recordings correct** — accuracy 1.0000, macro-F1 1.0000, baseline 0.6000.
+
+Detection latency is measured against an amplitude crossing independent of the rule's own threshold, and cannot be better than the 0.1 s hop.
+
+### R2 vs L1 vs L3 — the protocol is the whole story
+
+| Protocol | Scheme | Accuracy | Macro-F1 | Baseline |
+|---|---|---|---|---|
+| **R2 rule** | leave-one-motor-out | **1.0000** | **1.0000** | 0.6000 |
+| L1 learned | leave-one-motor-out | 0.6593 | 0.6394 | 0.5946 |
+| L3 learned **(leaky reference)** | shuffled windows | 0.9983 | 0.9981 | 0.5946 |
+
+The learned model drops from 0.9983 under a leaky split to 0.6593 under leave-one-motor-out — a gap of **34 points** on the same features. The rule, which has nothing fitted to any recording, is unaffected by the split.
+
+### N1 — bearing confound, a documented NEGATIVE RESULT
+
+Predicting **motor identity** from the same features scores **0.9983** against a baseline of 0.5049.
+
+> D4 has ONE motor per bearing condition, so 'outer-race fault' and 'motor identity' are the same variable. Nothing distinguishes a bearing defect from any other difference between two physical machines -- winding tolerances, mounting, alignment, age. Vibration is measurably 1.6-2.3x higher on the faulty motor across every matched scenario pair, and that measurement cannot be attributed to the bearing. Reported as a documented negative result, never as a capability.
+
+### Label vector — reconstructed, not validated, not used
+
+The paper's 1000-sample / step-500 reconstruction was tested against the measured phase-current collapse boundaries: **6/14** label-run boundaries coincide with a file boundary at 1998 windows per file, and **0/4** coincide with a measured phase-loss event.
+
+The file structure reconstructs; the within-file event structure does not. **Labels come from the collapse rule instead**, which was the primary source either way.
+
+### Fusion authority
+
+| Field | Value |
+|---|---|
+| Protocol used | R2 (threshold rule, leave-one-motor-out) |
+| Validation groups | 2 (floor: 3) |
+| Honest macro-F1 | 1.0000 (floor: 0.75) |
+| **Status** | **INDICATIVE** |
+
+**A perfect macro-F1 of 1.0000 still does not earn `Fault` authority**, because two motors is below the pre-registered minimum of 3 validation groups. The floor was fixed before this branch existed and has not been adjusted. This is the floor working as intended: a branch can be perfectly right and still not be trusted alone.
+
+_Source: `artifacts\multistage\supply\supply_results.json`, 9.0 s._
+
+---
 
 ## B-S2/S3 `inverter_telemetry` — stage S2/S3, D3 Bacha
 
@@ -122,7 +184,7 @@ Read from each branch's results JSON at load time, never hardcoded.
 |---|---|---|---|---|---|---|---|
 | `bearing` | S5 | leave-one-bearing-out | 29 | 0.7852 | yes | yes | **Fault-capable** |
 | `winding` | S4 | V5 (leave-one-session-out) | 2 | 0.6250 | **no** | **no** | **INDICATIVE** |
-| `supply` | S1 | — | — | — | — | — | **NOT MEASURED** |
+| `supply` | S1 | R2 (threshold rule, leave-one-motor-out) | 2 | 1.0000 | **no** | yes | **INDICATIVE** |
 | `inverter_telemetry` | S3 | — | — | — | — | — | **NOT MEASURED** |
 
 An **INDICATIVE** branch may raise `Warning` and contribute to the
