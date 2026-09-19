@@ -298,6 +298,70 @@ The order-resolution table in `docs/results_multistage.md` is **analytic
 extrapolation**, labelled as such per row. It is arithmetic about what a window length
 can resolve, not a claim about detection performance at low speed.
 
+### 1.10 Dashboard: what it is allowed to display (P5, 2026-09-19)
+
+`dashboard/app.py` is **replay only**. Every number it shows is read from a results
+JSON at display time; nothing is computed live, nothing is typed in, and no metric
+is passed to it as a literal.
+
+**The out-of-sample rule is enforced in code, not trusted.**
+`workflow_v2.md` section 8 requires a replayed unit's predictions to come from the
+fold model that held that unit out. `panels.assert_out_of_sample()` raises if a
+bearing scenario is not marked out-of-sample, or if the replayed bearing appears in
+its own fold's training-set list, and `app.py` renders the error instead of the
+panel.
+
+This costs real compute and is worth it. `scripts/02_train_lobo.py` keeps only the
+deployment model, which trained on all 29 bearings, so each bearing scenario
+**retrains its own leave-one-bearing-out fold** (about 2.8 min per bearing on this
+CPU). Reusing the deployment model would have been one line and would have made
+every bearing replay in-sample -- the exact failure the rule exists to prevent.
+
+**Authority is displayed per stage, not in a legend.** Each stage light carries a
+badge -- FAULT-CAPABLE / INDICATIVE / NOT MEASURED -- with the branch's honest
+metric and protocol underneath, so a viewer can see that a light can never go red
+without looking anywhere else. Tiers come from `fusion.load_branch_metrics()`.
+
+**No stage is hidden.** `supply` and `inverter_telemetry` have no results JSON and
+render as NOT MEASURED with live panels. An empty stage is more honest than a
+diagram implying four working branches.
+
+**As displayed today: exactly one stage of five can raise Fault.**
+
+| Stage | Branch | Tier |
+|---|---|---|
+| S1 Supply | `supply` | NOT MEASURED -- branch not built |
+| S2 DC link | `inverter_telemetry` | NOT MEASURED -- branch not built |
+| S3 Inverter | `inverter_telemetry` | NOT MEASURED -- branch not built |
+| S4 Winding | `winding` | INDICATIVE -- capped at Warning |
+| S5 Bearing | `bearing` | **FAULT-CAPABLE** |
+
+**Scenario (a) is a severity ramp, not a healthy-to-fault ramp.** All three D2
+healthy recordings are from 2022-01-25, so healthy is not measurable under a
+session-aware split (1.5, 1.7, data_notes_d2.md 7D). The original scenario (a) in
+workflow_v2.md section 8 called for "healthy trip -> gradual S4 winding fault".
+That cannot be built from real data and **is not synthesised**. The replacement
+walks real inter_turn recordings from the lowest to the highest severity and is
+named as such everywhere it appears.
+
+**Scenario (b) includes a failure on purpose.** `KI05` scores 0.0089 under
+leave-one-bearing-out and is one of the three bearings shipped as a scenario,
+alongside `KA04` (works) and `K001` (healthy specimen). A demo that can only show
+successes is a worse demo, and the per-bearing spread is already the headline
+finding of `accuracy_ceiling.md`.
+
+**Scenarios (c) and (d) are absent and say why.** (c) S1 phase loss is SKIPPED --
+the B-S1 branch does not exist: no adapter, no threshold rule, no results JSON.
+(d) S2/S3 open circuit is NOT MEASURED -- no
+`artifacts/multistage/inverter_telemetry/*.json`. Both appear in the manifest with
+a stated reason, and the dashboard lists them in the sidebar rather than omitting
+them.
+
+**Stored scenario size.** Capped at 120 windows per bearing, evenly spaced across
+the fold so a replay spans the whole recording set rather than its first seconds.
+Metrics shown on the cards come from the **full** fold, not from the stored subset;
+`n_windows_in_fold` and `n_windows_stored` are both recorded in each NPZ.
+
 ---
 
 ## 2. Bearing pipeline (S5, frozen)

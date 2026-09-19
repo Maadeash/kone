@@ -115,6 +115,29 @@ slower):
 pip install -r requirements.txt
 ```
 
+### The dashboard
+
+```bash
+streamlit run dashboard/app.py
+```
+
+Replay only — every number is read from a results JSON, nothing is computed live.
+Scenarios are pre-built by `python scripts/demo/build_scenarios.py`.
+
+Each drive stage carries a badge saying whether it may raise `Fault`:
+**FAULT-CAPABLE**, **INDICATIVE** or **NOT MEASURED**, with its honest metric and
+protocol underneath. Today exactly one stage of five — S5 bearing — clears the
+pre-registered floor. The other four are shown anyway; an empty stage is more
+honest than a diagram implying four working branches.
+
+Bearing scenarios are replayed through the fold model that **held that bearing
+out**, asserted in code (`panels.assert_out_of_sample`) rather than trusted, and
+the app refuses to display a scenario that cannot prove it.
+
+See [`docs/results_multistage.md`](docs/results_multistage.md) for the branch
+numbers and [`docs/claims_audit.md`](docs/claims_audit.md) for every claim's
+protocol and source.
+
 ### The pipeline, in order
 
 Build the feature cache from `data/` — ~3.5 min on 12 cores, runs once:

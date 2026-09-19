@@ -386,3 +386,54 @@ normalise the `coil` → `intercoil` token in 8 vibration filenames, and dedupli
 P3 runs before P1 deliberately: D3 is 8 MB and processes in seconds, so it exercises
 `schema.py`, `splits.py`, the adapter pattern, the metric-card format and the results renderer
 at negligible cost before the same plumbing meets 15 GB of TDMS.
+
+---
+
+## 14. P5 dashboard — as built (2026-09-19)
+
+`streamlit run dashboard/app.py`. Replay only; every number is read from a results
+JSON, nothing is computed live, nothing is typed in.
+
+### Panel layout
+
+| # | Panel | What it shows |
+|---|---|---|
+| 1 | Drive stages S1–S5 | Status light per stage, **tier badge on the stage itself** (FAULT-CAPABLE / INDICATIVE / NOT MEASURED), and the branch's honest metric with its protocol underneath. No legend-only design — a viewer must see that a light can never go red without looking elsewhere. |
+| 2 | Signal | Order spectrum per window for bearing scenarios; measured negative-sequence ratio for the winding ramp. |
+| 3 | Trip gating | Real D4 start-up segmentation, labelled **envelope-based**, plus the order-resolution table labelled **extrapolation** below 900 rpm. |
+| 4 | Fused status | Status, evidence string, and the rolling `p_fault` trace with the thresholds stated. For bearing scenarios it also shows the held-out bearing, how many bearings the fold trained on, and an **OUT-OF-SAMPLE verified** badge. |
+| 5 | Metric cards | One per branch, with the floor alongside each figure. The winding card carries V1, V5, the session-only baseline, the leaky reference, and `healthy: NOT MEASURABLE`. |
+
+### Rules the UI enforces rather than assumes
+
+**Out-of-sample.** `panels.assert_out_of_sample()` raises if a bearing scenario is
+not marked out-of-sample, or if the replayed bearing appears in its own fold's
+training set. `app.py` shows the error instead of the panel. Because
+`02_train_lobo.py` keeps only the deployment model, each bearing scenario
+**retrains its own fold** (~2.8 min on this CPU) rather than reusing the
+all-bearings model, which would make every replay in-sample.
+
+**Authority.** Tier comes from `fusion.load_branch_metrics()`, read from each
+branch's results JSON at display time. An INDICATIVE stage keeps live waveform and
+spectrum panels and is capped at `Warning`. **No stage is ever hidden** — an empty
+stage is more honest than a diagram implying four working branches.
+
+### Scenarios
+
+| # | Scenario | Status |
+|---|---|---|
+| (a) | S4 `inter_turn` **severity ramp** | Built. **Not** healthy→fault: all three D2 healthy recordings are from one acquisition session, so healthy is not measurable under a session-aware split and is **not synthesised**. |
+| (b) | S5 bearing on a **held-out** bearing | Built for `KA04` (works), `K001` (healthy specimen), `KI05` (**fails**, 0.0089). A demo that only shows successes is a worse demo. |
+| (c) | S1 D4 phase loss | **SKIPPED** — the B-S1 branch does not exist: no adapter, no threshold rule, no results JSON. |
+| (d) | S2/S3 D3 open circuit | **NOT MEASURED** — no `artifacts/multistage/inverter_telemetry/*.json`. |
+
+Scenario NPZs are capped at 120 windows each, evenly spaced across the fold so the
+replay spans the whole recording set. Metrics on the cards come from the **full**
+fold, not from the stored subset.
+
+### What the dashboard currently cannot show
+
+Two of five stages have no branch behind them, and one of the two that do is
+capped at `Warning`. **Exactly one stage — S5 bearing — can raise `Fault`.** That
+is the honest state of the project and the dashboard displays it rather than
+padding it.
