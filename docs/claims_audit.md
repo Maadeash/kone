@@ -467,6 +467,98 @@ bearing.
 Stated once in `adapters/thomas_motor.py::bearing_confound_note()` and quoted from
 there everywhere it appears, so the wording cannot drift.
 
+### 1.15 B-S2/S3 inverter telemetry: the ablation is the finding (P3, 2026-09-19)
+
+| Protocol | Split | Accuracy | Macro-F1 | Baseline |
+|---|---|---|---|---|
+| **V3 electrical-only** | contiguous block | **0.8503** | **0.8229** | 0.4045 |
+| V3 electrical-only **(leaky ref)** | random windows | 0.9229 | 0.9106 | 0.4048 |
+| V1 with temperature | contiguous block | 1.0000 | 1.0000 | 0.4045 |
+| V2 with temperature **(leaky ref)** | random windows | 1.0000 | 1.0000 | 0.4048 |
+
+**V1 and V2 agree exactly.** The leaky split gains nothing — not because the block
+split is safe, but because with a thermometer in the feature set the task is
+already saturated. A 4-class score that includes `over_temp` is substantially a
+temperature reading: F6 heats HB1, F7 heats HB1 and HB2, F8 heats HB3, each
+matching its filename.
+
+#### The measurement that says how much to trust any of it
+
+Per-class F1 under the **electrical-only** block split:
+
+| Class | F1 | Test windows |
+|---|---|---|
+| `normal` | 0.984 | 127 |
+| **`open_circuit`** | **0.511** | 51 |
+| `short_circuit` | 1.000 | 31 |
+| **`over_temp`** | **0.796** | 105 |
+
+**`over_temp` scores F1 0.796 with no temperature sensor in the feature set.**
+
+A thermal fault is not physically detectable from two 10 Hz phase currents. That
+number is the model identifying **which run** a window came from, not what
+condition the inverter was in. Each condition is one contiguous file recorded at a
+distinct wall-clock time (13:24 → 14:31), so anything that drifts with time
+carries run identity, and the currents drift.
+
+**Treat every 4-class number on this dataset as an upper bound contaminated by run
+identification.**
+
+And the class the electrical channels *should* see is the weakest:
+`open_circuit` at F1 **0.511**. F1 (HB2 high-side open) has almost the same
+channel means as F0 — measured Ia/Ib 519/474 against 515/475.
+
+#### 9-class location view: confusion matrix only
+
+Under the block split the smallest classes get 9–11 test windows (`F4` 9, `F3` 11,
+`F5` 11). A per-class figure on nine samples has a 95 % CI of roughly ±35 points.
+The matrix is rendered qualitatively in `results_multistage.md`; **no per-class
+number is reported from it**, and none should be quoted.
+
+#### Calibration independence, by construction
+
+`data_notes_d3.md` §4 refits the NTC Steinhart–Hart coefficients because the
+shipped ones under-read by 13–20 °C. That refit is three parameters on four points
+and is an extrapolation below 30 °C.
+
+**No feature in this branch depends on it.** Temperature enters only as raw ADC
+statistics and as ADC *differences* between channels, both monotone in temperature
+under any calibration. `tests/test_inverter_telemetry.py` asserts that a constant
+shift applied to every NTC reading — which is what a different calibration does to
+first order — leaves every difference feature unchanged.
+
+If the refit is wrong, none of these numbers move.
+
+#### Dropped channels
+
+`VDC`, `IDC`, `VD` are not used. Per-class means span 0.78 / 0.45 / 0.26 ADC counts
+against per-channel std 1.2–1.4 — inside their own quantisation noise. That also
+removes `Vdc·Idc`, `dVdc/dt` and `dIdc/dt` from the original plan: products and
+derivatives of a constant.
+
+### 1.16 B-S2/S3 fusion status: INDICATIVE at zero validation groups
+
+| Field | Value |
+|---|---|
+| Protocol | V1, contiguous block split, within-run |
+| Validation groups | **0** — floor is **3** |
+| Honest macro-F1 | 1.0000 — floor is 0.75 |
+| **Status** | **INDICATIVE — no `Fault` authority** |
+
+**Zero**, not two: one run per condition means there is nothing independent to hold
+out at all. The block split separates early-in-run from late-in-run within the same
+recording.
+
+§1.1 recorded the expectation "S2/S3 telemetry — 1 run per condition — **fails the
+group test** → indicative" on 2026-09-18, before this branch existed. The floor has
+not been adjusted.
+
+All three multi-stage branches now score at or above the macro-F1 floor — 1.0000,
+1.0000 and 0.6250 — and **all three are INDICATIVE**, every one of them failing on
+the group test. That is the floor doing the job it was written for: the binding
+constraint on this project is how many independent machines each dataset contains,
+not how well a model fits.
+
 ---
 
 ## 2. Bearing pipeline (S5, frozen)
@@ -539,7 +631,7 @@ Honest presentation:
 | S5 `bearing` | D1 Paderborn | 29 bearings | **0.7852 macro-F1** (LOBO, rebuilt cache) | **may raise Fault** (29 ≥ 3 groups, 0.7852 ≥ 0.75) | frozen |
 | S4 `winding` | D2 KAIST | **2 sessions scored** (3 days, 1 degenerate) | **0.6250** macro-F1 (V5, leave-one-session-out) | **INDICATIVE** — fails both floor tests | inter_coil vs inter_turn only; `healthy` NOT MEASURABLE |
 | S1 `supply` | D4 Thomas | **2 motors** | **1.0000** macro-F1 (R2, threshold rule) | **INDICATIVE** — 2 groups < 3, as predicted | threshold rule, not a learned model |
-| S2/S3 `inverter_telemetry` | D3 Bacha | 1 run/condition | NOT RUN | **indicative** — fails the ≥3-group test | NOT RUN |
+| S2/S3 `inverter_telemetry` | D3 Bacha | **0 groups** (1 run/condition) | 1.0000 macro-F1 with temperature; **0.8229 electrical-only** | **INDICATIVE** — 0 groups < 3, as predicted | ablation leads; 9-class is qualitative only |
 | B-SIM `inverter_waveform` | simulator | — | NOT RUN | out of MVP (§13.8) | NOT RUN |
 
 ### 3.1 Required companion measurements

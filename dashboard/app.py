@@ -94,12 +94,15 @@ else:
     choice = next(s for s in playable if s["id"] == chosen_id)
 
 st.sidebar.divider()
+unavailable = [s for s in manifest["scenarios"] if not s.get("file")]
 st.sidebar.header("Unavailable stages")
-for s in manifest["scenarios"]:
-    if s.get("file"):
-        continue
-    st.sidebar.markdown(f"**{s['stage']} · {s['id']}** — `{s.get('status','?')}`")
-    st.sidebar.caption(s.get("reason", ""))
+if unavailable:
+    for s in unavailable:
+        st.sidebar.markdown(f"**{s['stage']} · {s['id']}** — `{s.get('status','?')}`")
+        st.sidebar.caption(s.get("reason", ""))
+else:
+    st.sidebar.caption("None — every stage has a branch and a scenario. "
+                       "Four of five are INDICATIVE; see the badges.")
 
 st.sidebar.divider()
 st.sidebar.caption(f"Scenarios built {manifest.get('built', '—')}")
@@ -179,6 +182,17 @@ with left:
             f"{float(sc['event_t1']):.1f} s. The rule flags a phase lost when its "
             f"RMS falls below 5 % of the median of the other two — detection "
             f"latency **{float(sc['latency_s']):.2f} s**.")
+    elif "imbalance" in sc:
+        imb = np.asarray(sc["imbalance"])
+        nrm = np.asarray(sc["normal_imbalance"])
+        st.line_chart({f"{sc['f_code']} {sc['true_label']}": imb}, height=190)
+        st.caption(
+            f"Ia–Ib imbalance per 5 s window, **electrical channels only** — no "
+            f"temperature. Normal run (F0) sits at "
+            f"{float(nrm.mean()):+.3f} ± {float(nrm.std()):.3f}; this condition at "
+            f"{float(imb.mean()):+.3f} ± {float(imb.std()):.3f}. With temperature "
+            f"the 4-class task scores 1.0000, but that is a thermometer reading — "
+            f"this panel shows what the currents alone can see.")
     elif "neg_seq_ratio" in sc:
         st.line_chart(np.asarray(sc["neg_seq_ratio"]), height=190)
         st.caption("Negative-sequence ratio per window, ordered by severity. "
@@ -294,6 +308,17 @@ if view:
         b.info("**Threshold rule, not a learned model.** Nothing is fitted to any "
                "recording, so there is nothing to hold out — `out_of_sample` is "
                "False by construction, not by omission.", icon="📏")
+        b.caption(str(sc["note"]))
+    elif str(sc.get("branch")) == "inverter_telemetry":
+        b.metric("Condition", f"{sc['f_code']} — {sc['location']}")
+        b.metric("Family", str(sc["true_label"]))
+        b.metric("Run length", f"{int(sc['n_samples'])} samples @ 10 Hz")
+        b.warning("**No group axis.** One run per condition, so nothing can be "
+                  "held out and every number is a within-run estimate. "
+                  "INDICATIVE whatever it scores.", icon="⚠️")
+        b.info("Electrical-only view. The temperature channels make the 4-class "
+               "task trivial, and `over_temp` scores F1 0.796 **without** them — "
+               "which is the model reading run identity, not physics.", icon="📏")
         b.caption(str(sc["note"]))
 else:
     st.info("Select a scenario with per-window probabilities to see fusion.")

@@ -15,6 +15,7 @@ from drivesentinel import config as C
 from drivesentinel import fusion as FU
 from drivesentinel import trip as TR
 from scripts._render_supply import render_supply
+from scripts._render_inverter import render_inverter
 
 BRANCHES = [
     ("winding", "B-S4", "S4", "D2 KAIST PMSM"),
@@ -155,6 +156,8 @@ def main():
             lines += render_winding(r)
         elif slug == "supply":
             lines += render_supply(r, fmt)
+        elif slug == "inverter_telemetry":
+            lines += render_inverter(r, fmt)
         else:
             lines += ["**NOT RUN**", ""]
         lines.append(f"_Source: `{os.path.relpath(path, C.PROJECT_ROOT)}`, "

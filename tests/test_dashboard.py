@@ -78,12 +78,25 @@ def test_winding_stage_is_indicative_as_measured():
     assert rows["winding"]["badge"] == "INDICATIVE"
 
 
-def test_unmeasured_stages_are_shown_not_hidden():
-    """Never hide a stage: an empty one is more honest than a missing one."""
+def test_all_five_stages_are_always_shown():
+    """
+    Never hide a stage. All four branches are measured now, so this asserts the
+    structural property rather than relying on one being absent.
+    """
     rows = {r["stage"]: r for r in P.stage_rows(FU.load_branch_metrics())}
-    assert "S1" in rows and "S2" in rows
-    assert rows["S2"]["badge"] == "NOT MEASURED"
-    assert rows["S2"]["metric_line"]          # still says something
+    assert set(rows) == {"S1", "S2", "S3", "S4", "S5"}
+    assert all(r["metric_line"] for r in rows.values())
+
+
+def test_an_unmeasured_branch_still_gets_a_row_and_a_reason():
+    """Constructed directly, so it holds even when every real branch is measured."""
+    m = dict(FU.load_branch_metrics())
+    m["supply"] = FU.BranchMetric("supply", "S1", measured=False,
+                                  note="results JSON absent")
+    rows = {r["branch"]: r for r in P.stage_rows(m)}
+    assert rows["supply"]["badge"] == "NOT MEASURED"
+    assert rows["supply"]["can_fault"] is False
+    assert "absent" in rows["supply"]["metric_line"]
 
 
 def test_supply_stage_is_indicative_at_a_perfect_score():
@@ -107,7 +120,10 @@ def test_stage_row_metric_line_names_the_protocol():
 
 
 def test_status_defaults_to_not_measured_for_absent_branches():
-    rows = {r["branch"]: r for r in P.stage_rows(FU.load_branch_metrics())}
+    m = dict(FU.load_branch_metrics())
+    m["inverter_telemetry"] = FU.BranchMetric("inverter_telemetry", "S3",
+                                              measured=False, note="absent")
+    rows = {r["branch"]: r for r in P.stage_rows(m)}
     assert rows["inverter_telemetry"]["status"] == "NOT MEASURED"
 
 
@@ -145,9 +161,29 @@ def test_winding_card_says_healthy_is_not_measurable():
 
 
 def test_unmeasured_card_has_no_metric_and_says_why():
-    cards = {c["branch"]: c for c in P.metric_cards(FU.load_branch_metrics())}
+    m = dict(FU.load_branch_metrics())
+    m["inverter_telemetry"] = FU.BranchMetric("inverter_telemetry", "S3",
+                                              measured=False, note="absent")
+    cards = {c["branch"]: c for c in P.metric_cards(m)}
     assert cards["inverter_telemetry"]["metric"] is None
     assert cards["inverter_telemetry"]["note"]
+
+
+def test_inverter_branch_is_indicative_with_zero_groups():
+    """
+    B-S2/S3 has NO group axis -- one run per condition. Zero validation groups
+    must fail the floor regardless of score.
+    """
+    rows = {r["branch"]: r for r in P.stage_rows(FU.load_branch_metrics())}
+    if not rows["inverter_telemetry"]["measured"]:
+        pytest.skip("inverter_telemetry_results.json absent")
+    assert rows["inverter_telemetry"]["badge"] == "INDICATIVE"
+    assert rows["inverter_telemetry"]["can_fault"] is False
+
+
+def test_every_branch_now_has_a_row_with_a_tier():
+    for r in P.stage_rows(FU.load_branch_metrics()):
+        assert r["tier"] in ("Fault-capable", "INDICATIVE", "NOT MEASURED")
 
 
 def test_supply_scenario_declares_it_is_a_rule_not_a_model():

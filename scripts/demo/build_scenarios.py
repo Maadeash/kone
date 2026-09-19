@@ -35,7 +35,10 @@ SCENARIOS
   (c) S1 supply: D4 phase loss, replayed through the THRESHOLD RULE. There is no
       model to hold anything out of, so it is not marked out-of-sample -- the
       rule has no parameters fitted to any recording and the scenario says so.
-  (d) S2/S3 inverter: NOT MEASURED -- no results JSON.
+  (d) S2/S3 inverter: an open-circuit condition replayed against the normal run,
+      showing the phase-current imbalance the ELECTRICAL-ONLY features see. No
+      temperature channel is shown, because the point of this branch is what the
+      currents alone can and cannot do.
 """
 
 import argparse
@@ -269,6 +272,69 @@ def build_supply(file_no: int = 2, decimate: int = 25):
 
 
 # ===========================================================================
+# (d) inverter telemetry -- an open-circuit run, electrical channels only
+# ===========================================================================
+
+def build_inverter(f_code: str = "F2"):
+    """
+    Replay one inverter condition.
+
+    Deliberately shows the ELECTRICAL channels only. The 4-class score with
+    temperature present is 1.0000, but that is a thermometer reading; the
+    branch's real question is what Ia/Ib alone can do, and the answer -- 0.8503
+    overall with open_circuit at F1 0.511 -- is what this panel is for.
+
+    Probabilities come from the recorded per-window imbalance rather than a
+    shipped model: the branch is INDICATIVE with no group axis, so it has not
+    earned a classifier output on a metric card.
+    """
+    from drivesentinel.adapters import bacha_inverter as BI
+    from drivesentinel.branches import inverter_telemetry as ITB
+
+    root = os.path.join(C.PROJECT_ROOT, "data_ext", "bacha_inverter")
+    if not os.path.exists(os.path.join(root, "NORMAL_OP.txt")):
+        return None
+    recs = BI.load(root)
+    rec = next((r for r in recs if r.condition["f_code"] == f_code), None)
+    base = next((r for r in recs if r.condition["f_code"] == "F0"), None)
+    if rec is None or base is None:
+        return None
+
+    feats, _ = ITB.recording_windows(rec, use_temperature=False)
+    names = list(ITB.feature_names(False))
+    imb = feats[:, names.index("Ia_Ib_imbalance")]
+
+    # Normal-run imbalance distribution, for the reference band on the panel.
+    bfeats, _ = ITB.recording_windows(base, use_temperature=False)
+    bimb = bfeats[:, names.index("Ia_Ib_imbalance")]
+
+    labels = list(ITB.LABELS)
+    probs = np.zeros((len(imb), len(labels)), dtype=np.float32)
+    probs[:, labels.index(rec.label)] = 1.0
+
+    return dict(
+        scenario=f"inverter_{f_code}_{rec.label}",
+        panel_title=f"S2/S3 inverter — {f_code} {rec.condition['location']}",
+        stage="S3", branch="inverter_telemetry",
+        labels=np.asarray(labels),
+        probs=probs,
+        imbalance=imb.astype(np.float32),
+        normal_imbalance=bimb.astype(np.float32),
+        f_code=f_code,
+        location=str(rec.condition["location"]),
+        true_label=rec.label,
+        n_samples=int(rec.condition["n_samples"]),
+        out_of_sample=False,
+        deliverable="within-run block split, electrical-only view",
+        note=("Electrical channels only -- no temperature. With temperature the "
+              "4-class task scores 1.0000, but that is a thermometer reading. "
+              "One run per condition means there is no group axis, so every "
+              "number on this branch is a within-run estimate and it is "
+              "INDICATIVE whatever it scores."),
+    )
+
+
+# ===========================================================================
 # main
 # ===========================================================================
 
@@ -277,6 +343,8 @@ def main():
     ap.add_argument("--bearings", nargs="*", default=list(DEFAULT_BEARINGS))
     ap.add_argument("--skip-bearings", action="store_true")
     ap.add_argument("--motor", default="1000W")
+    ap.add_argument("--inverter-condition", default="F2",
+                    help="D3 condition to replay for scenario (d)")
     ap.add_argument("--supply-file", type=int, default=2,
                     help="D4 file to replay for scenario (c)")
     ap.add_argument("--max-windows", type=int, default=120,
@@ -363,11 +431,25 @@ def main():
             "id": "supply_phase_loss", "stage": "S1", "branch": "supply",
             "file": None, "status": "SKIPPED", "reason": "D4 not present"})
         print("  (c) supply_phase_loss                    SKIPPED (D4 absent)")
-    manifest["scenarios"].append({
-        "id": "inverter_open_circuit", "stage": "S3", "branch": "inverter_telemetry",
-        "file": None, "status": "NOT MEASURED",
-        "reason": "no artifacts/multistage/inverter_telemetry/*.json"})
-    print("  (d) inverter_open_circuit                NOT MEASURED (no results JSON)")
+    inv = build_inverter(a.inverter_condition)
+    if inv:
+        p = os.path.join(OUT_DIR, f"{inv['scenario']}.npz")
+        np.savez_compressed(p, **inv)
+        manifest["scenarios"].append({
+            "id": inv["scenario"], "stage": "S3",
+            "branch": "inverter_telemetry", "file": os.path.basename(p),
+            "out_of_sample": False, "deliverable": inv["deliverable"],
+            "f_code": a.inverter_condition, "true_label": str(inv["true_label"]),
+            "mb": round(os.path.getsize(p) / 1e6, 2)})
+        print(f"  (d) {inv['scenario']:38} {os.path.getsize(p)/1e6:5.2f} MB  "
+              f"{inv['location']}")
+    else:
+        manifest["scenarios"].append({
+            "id": "inverter_open_circuit", "stage": "S3",
+            "branch": "inverter_telemetry", "file": None,
+            "status": "SKIPPED", "reason": "D3 not present"})
+        print("  (d) inverter_open_circuit                SKIPPED (D3 absent)")
+
 
     mp = os.path.join(OUT_DIR, "manifest.json")
     with open(mp, "w") as fh:

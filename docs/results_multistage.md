@@ -154,7 +154,89 @@ _Source: `artifacts\multistage\supply\supply_results.json`, 9.0 s._
 
 ## B-S2/S3 `inverter_telemetry` — stage S2/S3, D3 Bacha
 
-**NOT RUN**
+**Task: normal / open_circuit / short_circuit / over_temp** (4-class family). 1,050 windows, 5.0 s / 1.0 s hop, purge 5 windows.
+
+### The confound, stated before any number
+
+> Each condition is ONE contiguous run recorded at a distinct wall-clock time (13:24 to 14:31), and temperature drifts monotonically within a run. A contiguous block split therefore separates EARLY-IN-RUN from LATE-IN-RUN, not condition from condition. There is no group axis on this dataset -- one run per condition means nothing independent can be held out -- so every number here is a within-run estimate and the branch is INDICATIVE whatever it scores.
+
+### V3 — electrical-only ablation (headline)
+
+> Can open- and short-circuit faults be detected without a thermometer? This is the question that matters for a drive-health story.
+
+Temperature channels removed: 10 features from `Ia`/`Ib` alone.
+
+| Split | Accuracy | Macro-F1 | Baseline |
+|---|---|---|---|
+| contiguous block | **0.8503** | **0.8229** | 0.4045 |
+| random **(leaky reference)** | 0.9229 | 0.9106 | 0.4048 |
+
+Per-class F1 under the block split:
+
+| Class | F1 | Test windows |
+|---|---|---|
+| `normal` | 0.984 | 127 |
+| `open_circuit` | 0.511 | 51 |
+| `short_circuit` | 1.000 | 31 |
+| `over_temp` | 0.796 | 105 |
+
+#### What that table actually shows
+
+> The electrical-only ablation reaches macro-F1 0.8229 and scores over_temp at F1 0.796 -- WITH NO TEMPERATURE SENSOR IN THE FEATURE SET. A thermal fault is not physically detectable from two 10 Hz phase currents, so that number is the model identifying WHICH RUN a window came from, not what condition the inverter was in. Each condition is one contiguous file at a distinct wall-clock time, so anything that drifts with time carries run identity. Treat every 4-class number on this dataset as an upper bound contaminated by run identification.
+
+> open_circuit is the one class the electrical channels should be able to see, and it is the WEAKEST at F1 0.511. F1 (HB2 high-side open) has almost the same Ia/Ib means as F0 -- measured 519/474 against 515/475.
+
+### V1 and V2 — with temperature
+
+| Protocol | Split | Accuracy | Macro-F1 | Baseline |
+|---|---|---|---|---|
+| **V1** | contiguous block, 70/30 per run | **1.0000** | **1.0000** | 0.4045 |
+| V2 **(leaky reference)** | random windows | 1.0000 | 1.0000 | 0.4048 |
+
+> The over_temp family is separable by a single NTC threshold: F6 heats HB1, F7 heats HB1 and HB2, F8 heats HB3, each matching its filename. A 4-class score that includes over_temp is therefore substantially a thermometer reading, which is why the electrical-only ablation leads the card.
+
+V1 and V2 agree to 0.0000 — the leaky split gains nothing, because with temperature present the task is already saturated. That is not a sign the block split is safe; it is a sign the task is trivial once a thermometer is in the feature set.
+
+### 9-class location view — qualitative only, NOT a metric
+
+> Under the block split the smallest classes get ~8-10 test windows. A per-class number on eight samples has a 95 % CI of roughly +/-35 points.
+
+Test-window support per class: `F0` 127, `F1` 19, `F2` 32, `F3` 11, `F4` 9, `F5` 11, `F6` 24, `F7` 51, `F8` 30.
+
+| true \ pred | `F0` | `F1` | `F2` | `F3` | `F4` | `F5` | `F6` | `F7` | `F8` |
+|---|---|---|---|---|---|---|---|---|---|
+| **`F0`** | 126 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
+| **`F1`** | 0 | 19 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| **`F2`** | 0 | 0 | 32 | 0 | 0 | 0 | 0 | 0 | 0 |
+| **`F3`** | 0 | 0 | 3 | 7 | 1 | 0 | 0 | 0 | 0 |
+| **`F4`** | 0 | 0 | 0 | 0 | 5 | 4 | 0 | 0 | 0 |
+| **`F5`** | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 0 | 0 |
+| **`F6`** | 0 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 0 |
+| **`F7`** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 51 | 0 |
+| **`F8`** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 30 |
+
+**No per-class number is reported from this matrix.**
+
+### Channels dropped, and why the numbers survive a bad calibration
+
+Dropped: `VDC`, `IDC`, `VD`. VDC/IDC/VD per-class means span 0.78/0.45/0.26 ADC counts against per-channel std 1.2-1.4 -- inside their own quantisation noise.
+
+> No feature inverts the NTC curve. Temperature enters only as raw ADC statistics and as ADC DIFFERENCES between channels, both monotone in temperature under any calibration. If the Steinhart-Hart refit in data_notes_d3.md is wrong, none of these numbers change.
+
+### Fusion authority
+
+| Field | Value |
+|---|---|
+| Protocol used | V1 (contiguous block split, within-run) |
+| Validation groups | **0** (floor: 3) |
+| Honest macro-F1 | 1.0000 (floor: 0.75) |
+| **Status** | **INDICATIVE** |
+
+0 independent validation groups against the pre-registered minimum of 3: one run per condition means there is nothing to hold out. The branch is INDICATIVE whatever it scores, which docs/claims_audit.md §1.1 anticipated before it existed.
+
+_Source: `artifacts\multistage\inverter_telemetry\inverter_telemetry_results.json`, 6.7 s._
+
+---
 
 ## Fusion
 
@@ -185,7 +267,7 @@ Read from each branch's results JSON at load time, never hardcoded.
 | `bearing` | S5 | leave-one-bearing-out | 29 | 0.7852 | yes | yes | **Fault-capable** |
 | `winding` | S4 | V5 (leave-one-session-out) | 2 | 0.6250 | **no** | **no** | **INDICATIVE** |
 | `supply` | S1 | R2 (threshold rule, leave-one-motor-out) | 2 | 1.0000 | **no** | yes | **INDICATIVE** |
-| `inverter_telemetry` | S3 | — | — | — | — | — | **NOT MEASURED** |
+| `inverter_telemetry` | S3 | V1 (contiguous block split, within-run) | 0 | 1.0000 | **no** | yes | **INDICATIVE** |
 
 An **INDICATIVE** branch may raise `Warning` and contribute to the
 evidence string, but never `Fault`, however confident it is. Its
