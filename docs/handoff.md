@@ -1,7 +1,8 @@
 # DriveSentinel — context handoff
 
 State document for a session that knows nothing about this project.
-Generated 2026-09-19 from the repo and the results JSON, at commit `824e786`.
+Generated 2026-09-19 from the repo and the results JSON. Updated after the D2 CNN
+experiment and the D3 run-identification control.
 
 ---
 
@@ -18,7 +19,7 @@ fused by a rule-based layer, and shown in a replay dashboard.
 | Build plan | `docs/workflow_v2.md` — §13 holds post-audit decisions and **supersedes** anything above it |
 | Claims register | `docs/claims_audit.md` — every number with its protocol and source |
 | Environment | `.venv/`, Python 3.12, **CPU torch 2.14.0+cpu**. No NVIDIA GPU (Intel UHD only) |
-| Tests | **347 pass**, ~35 s |
+| Tests | **348 pass**, ~35 s |
 | Datasets | `data/` (D1 Paderborn, 21 GB), `data_ext/` (D2 KAIST, D3 Bacha, D4 Thomas, 16 GB). All gitignored |
 
 No dataset shares a physical machine across stages, so the demo is labelled
@@ -107,6 +108,8 @@ These are not stylistic. Several were violated once already and the corrections 
 | **D4 single-session verification.** Six signal-derived fingerprints (mains frequency to 0.001 Hz, DC offsets, noise floor) fail to separate the two motors; mains frequency spans only 0.081 Hz across all ten files. No D2-style confound. Stated as absence of evidence plus corroboration, **not proof** — the `.mat` headers are export times, not acquisition times. | `docs/data_notes_d4.md` §4 |
 | **D3 over_temp run-identification.** The electrical-only ablation scores `over_temp` at **F1 0.796 with no temperature sensor in the feature set**. A thermal fault is not detectable from two 10 Hz phase currents, so that is the model identifying *which run* a window came from. Treat every 4-class number on D3 as contaminated by run identification. | `claims_audit.md` §1.15, `results_multistage.md` |
 | **Order-resolution table.** `Δorder = 60/(T·rpm)`. At 900 rpm a 1 s window resolves 0.0667 orders; at 20 rpm it resolves 3.00, wider than the 1.89-order BPFO/BPFI gap, so those lines merge. Holding 900 rpm resolution at 20 rpm needs a **45 s** window. Arithmetic, labelled extrapolation. This is the answer to the low-speed sheave question. | `trip.resolution_report()`, `results_multistage.md`, dashboard panel 3 |
+| **D3 run-identification control.** Training the same features on the same block split to predict *which run* a window came from succeeds at **0.9713** (with temperature) and **0.7484** (electrical only) against a 0.4045 baseline over 9 runs — within a few points of the condition scores themselves. One run per condition means naming the run names the condition. Converts the `over_temp` inference into a measurement. | `claims_audit.md` §1.18, `results_multistage.md` |
+| **D2 CNN negative result.** A CNN of comparable capacity (26,914 params vs the bearing model's 27,024) on the full harmonic spectrum scores V5 **0.5608 ± 0.0142** against the GBM's 0.6251 — both pre-declared criteria fail. On the **leaky** split it scores 0.8448 against the GBM's 0.9990, which says that score was largely per-recording memorisation: a **fourth independent line** on the D2 confound. | `claims_audit.md` §1.17, `results_multistage.md` |
 | **KI05 missed detection.** A genuinely faulty inner-race bearing the model scores **0.0089** on. It is shipped as a demo scenario on purpose, and panel 4 raises a MISSED DETECTION banner rather than letting "Normal" pass as a healthy machine. | `docs/accuracy_ceiling.md`, `artifacts/demo/bearing_KI05.npz` |
 
 ---
@@ -119,7 +122,7 @@ These are not stylistic. Several were violated once already and the corrections 
 | **D2 `healthy` is NOT MEASURABLE** | All three healthy recordings are from 2022-01-25. No session-aware protocol can train and test the class. **No caveated number for it anywhere.** |
 | **D2 task is `inter_coil` vs `inter_turn` only** | Follows from the above. |
 | **D4 label vector is not used** | The 1000/500 reconstruction matches 6/14 *file* boundaries but **0/4** measured phase-loss events. Labels come from the current-collapse rule. |
-| **No CNN for D2** | 30 fault recordings across 2 usable folds. |
+| **No CNN for D2** | Originally: 30 fault recordings across 2 usable folds. **Now also measured** — a CNN was tried once with criteria declared in advance and FAILED both (§4). GBM ships. **No further architectures**; sweeping until one passes is the failure the criteria exist to prevent. |
 | **Demo NPZs are tracked in git** (3.3 MB) | A fresh clone must run the dashboard without a 7-minute retrain. |
 | **P7/P8 simulation out of scope** | Stretch, cut for the MVP. |
 | **Trip gating implemented but disabled** | No dataset in the roster has a speed ramp; gating would mark every window `cruise` and change nothing. |
@@ -177,6 +180,13 @@ Branch scripts — each writes its own results JSON:
 .venv/Scripts/python.exe scripts/branches/10_winding.py --rebuild
 .venv/Scripts/python.exe scripts/branches/20_supply.py
 .venv/Scripts/python.exe scripts/branches/30_inverter_telemetry.py
+```
+
+Declared post-hoc experiment (negative result, ~43 min, GBM still ships):
+
+```bash
+.venv/Scripts/python.exe scripts/experiments/d2_cnn.py
+.venv/Scripts/python.exe scripts/_claims_cnn.py          # regenerates claims_audit §1.17
 ```
 
 Bearing pipeline (frozen) and demo scenarios:

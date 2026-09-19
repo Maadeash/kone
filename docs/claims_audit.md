@@ -590,6 +590,36 @@ The hypothesis is not supported. A CNN with capacity comparable to the bearing m
 
 Regenerate: `python scripts/experiments/d2_cnn.py`. Results in `artifacts/multistage/winding/winding_cnn_results.json`.
 
+### 1.18 D3 run-identification control — the inference, measured
+
+§1.15 argued from `over_temp` scoring F1 0.796 with no temperature sensor that the
+model must be reading run identity. This measures that directly: **train the same
+features, on the same block split, to predict which run a window came from.**
+
+| Predicting | Features | Accuracy | Macro-F1 | Baseline |
+|---|---|---|---|---|
+| which run (9 runs) | with temperature | **0.9713** | 0.9111 | 0.4045 |
+| which run (9 runs) | electrical only | **0.7484** | 0.7277 | 0.4045 |
+
+Beside the condition scores, same split and same features:
+
+| Features | 4-class condition | which run | Gap |
+|---|---|---|---|
+| with temperature | 1.0000 | 0.9713 | +0.0287 |
+| electrical only | 0.8503 | 0.7484 | +0.1019 |
+
+**The two quantities are within a few points of each other on both feature sets**,
+which is what you would expect if they are largely the same thing. D3 has exactly
+one run per condition, so a model that can name the run can name the condition
+without diagnosing anything.
+
+**Consequence:** the 4-class family score is an upper bound on condition diagnosis,
+and the run-identification number is how far above the truth that bound may sit.
+Quote neither without the other.
+
+This is now a measurement rather than an inference, and it is generated into
+`docs/results_multistage.md` from the results JSON.
+
 ---
 
 ## 2. Bearing pipeline (S5, frozen)

@@ -220,3 +220,26 @@ def test_electrical_only_dataset_has_the_same_rows():
     assert a["X"].shape[0] == b["X"].shape[0]
     assert np.array_equal(a["family"], b["family"])
     assert b["X"].shape[1] < a["X"].shape[1]
+
+
+@needs_data
+def test_run_identification_control_is_recorded():
+    """
+    The control that converts the over_temp inference into a measurement. If it
+    ever disappears from the results JSON, the 4-class number loses the context
+    that makes it quotable.
+    """
+    import json
+    p = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                     "artifacts", "multistage", "inverter_telemetry",
+                     "inverter_telemetry_results.json")
+    if not os.path.exists(p):
+        pytest.skip("branch not run")
+    with open(p) as fh:
+        r = json.load(fh)
+    rid = r["run_identification_control"]
+    assert rid["n_runs"] == 9
+    for k in ("with_temperature", "electrical_only"):
+        assert rid[k]["accuracy"] > rid[k]["majority_baseline"], k
+    # The point of the control: run identity is close to the condition score.
+    assert rid["with_temperature"]["accuracy"] > 0.9

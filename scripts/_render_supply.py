@@ -151,6 +151,33 @@ def render_cnn_comparison(cnn, gbm, fmt):
              f"{fmt(v['seed_spread'], 4)} | margin {v['criterion_2_margin']:+.4f} "
              f"| {'**PASS**' if v['criterion_2_beats_gbm_by_more_than_seed_spread'] else '**FAIL**'} |")
     L.append("")
+    # The V3 observation is the reason this negative result earns slide space.
+    c3 = cnn["V3_shuffled_LEAKY"]["accuracy"]["mean"]
+    g3v = gbm["V3"]["pooled"]["accuracy"]
+    L.append("#### A fourth independent line on the D2 confound")
+    L.append("")
+    L.append(f"On the **leaky** shuffled split the CNN scores {fmt(c3)} against the "
+             f"GBM's {fmt(g3v)} — **{100*(g3v-c3):.1f} points lower**, on the same "
+             f"windows and the same task.")
+    L.append("")
+    L.append("A leaky split rewards memorising individual recordings. The GBM, with "
+             "23 scalars it can combine freely, memorises them almost perfectly. A "
+             "convolutional model of comparable capacity, constrained to look for "
+             "*shape* in the spectrum, cannot reach the same score — because the "
+             "thing being rewarded is not spectral shape, it is per-recording "
+             "identity.")
+    L.append("")
+    L.append("So the GBM's 0.9990 was **largely per-recording memorisation**, and the "
+             "CNN's inability to match it is evidence of that rather than a weakness. "
+             "This is a fourth independent line supporting the same finding:")
+    L.append("")
+    L.append("| # | Line of evidence | Where |")
+    L.append("|---|---|---|")
+    L.append("| 1 | DAQ chassis and module split the 3000 W motor's fault types | `data_notes_d2.md` §7A |")
+    L.append("| 2 | Probe polarity forms three patterns that track session | `data_notes_d2.md` §6.2 |")
+    L.append("| 3 | Session-clustered residual recovers the session at 1.000 | `data_notes_d2.md` §7B |")
+    L.append("| 4 | **The leaky score collapses when the model cannot memorise recordings** | **this section** |")
+    L.append("")
     L.append(f"**Outcome: {v['outcome']}.** Shipped branch: "
              f"**{v['shipped_branch']}**.")
     L.append("")

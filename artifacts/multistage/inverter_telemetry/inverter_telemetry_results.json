@@ -287,6 +287,23 @@
       "caveat": "(leaky reference) windows split at random within each run"
     }
   },
+  "run_identification_control": {
+    "question": "Can the model tell WHICH RUN a window came from? One run per condition means run identity and condition label are the same variable, so whatever fraction of the 4-class score is run identification is not condition diagnosis.",
+    "with_temperature": {
+      "accuracy": 0.9713375796178344,
+      "macro_f1": 0.9111336594842976,
+      "majority_baseline": 0.40445859872611467,
+      "n": 314
+    },
+    "electrical_only": {
+      "accuracy": 0.7484076433121019,
+      "macro_f1": 0.7277469154284364,
+      "majority_baseline": 0.40445859872611467,
+      "n": 314
+    },
+    "n_runs": 9,
+    "interpretation": "Run identity is recoverable at 0.9713 with temperature and 0.7484 from the electrical channels alone, against a 0.4045 majority baseline over 9 runs. The 4-class family score is an upper bound on condition diagnosis by that margin: a model that can name the run can name the condition without diagnosing anything, because there is one run per condition."
+  },
   "location_9class_QUALITATIVE_ONLY": {
     "protocol": "contiguous block split, 9-class location view",
     "reported_as": "confusion matrix only -- NOT a headline metric",
@@ -429,5 +446,5 @@
     "status": "INDICATIVE",
     "reason": "0 independent validation groups against the pre-registered minimum of 3: one run per condition means there is nothing to hold out. The branch is INDICATIVE whatever it scores, which docs/claims_audit.md \u00a71.1 anticipated before it existed."
   },
-  "seconds": 6.7
+  "seconds": 10.4
 }

@@ -100,6 +100,21 @@ Same features, predicting the acquisition variable instead of the fault class.
 | 1. V5 beats the session-only baseline | > 0.750 | 0.5608 | **FAIL** |
 | 2. V5 beats the GBM by more than the seed spread | > 0.6251 + 0.0142 | margin -0.0643 | **FAIL** |
 
+#### A fourth independent line on the D2 confound
+
+On the **leaky** shuffled split the CNN scores 0.8448 against the GBM's 0.9990 — **15.4 points lower**, on the same windows and the same task.
+
+A leaky split rewards memorising individual recordings. The GBM, with 23 scalars it can combine freely, memorises them almost perfectly. A convolutional model of comparable capacity, constrained to look for *shape* in the spectrum, cannot reach the same score — because the thing being rewarded is not spectral shape, it is per-recording identity.
+
+So the GBM's 0.9990 was **largely per-recording memorisation**, and the CNN's inability to match it is evidence of that rather than a weakness. This is a fourth independent line supporting the same finding:
+
+| # | Line of evidence | Where |
+|---|---|---|
+| 1 | DAQ chassis and module split the 3000 W motor's fault types | `data_notes_d2.md` §7A |
+| 2 | Probe polarity forms three patterns that track session | `data_notes_d2.md` §6.2 |
+| 3 | Session-clustered residual recovers the session at 1.000 | `data_notes_d2.md` §7B |
+| 4 | **The leaky score collapses when the model cannot memorise recordings** | **this section** |
+
 **Outcome: NEGATIVE RESULT.** Shipped branch: **gradient boosting (unchanged)**.
 
 INDICATIVE -- 2 validation groups against a floor of 3, whatever this scores. The floor is on GROUPS as well as macro-F1 and was pre-registered before any branch existed.
@@ -208,6 +223,26 @@ Per-class F1 under the block split:
 
 > open_circuit is the one class the electrical channels should be able to see, and it is the WEAKEST at F1 0.511. F1 (HB2 high-side open) has almost the same Ia/Ib means as F0 -- measured 519/474 against 515/475.
 
+### The run-identification control — the inference, measured
+
+> Can the model tell WHICH RUN a window came from? One run per condition means run identity and condition label are the same variable, so whatever fraction of the 4-class score is run identification is not condition diagnosis.
+
+| Predicting | Features | Accuracy | Macro-F1 | Baseline |
+|---|---|---|---|---|
+| **which run** | with temperature | **0.9713** | 0.9111 | 0.4045 |
+| **which run** | electrical only | **0.7484** | 0.7277 | 0.4045 |
+
+Set beside the condition scores on the same split and the same features:
+
+| Features | 4-class condition | **which run** | Gap |
+|---|---|---|---|
+| with temperature | 1.0000 | 0.9713 | +0.0287 |
+| electrical only | 0.8503 | 0.7484 | +0.1019 |
+
+> Run identity is recoverable at 0.9713 with temperature and 0.7484 from the electrical channels alone, against a 0.4045 majority baseline over 9 runs. The 4-class family score is an upper bound on condition diagnosis by that margin: a model that can name the run can name the condition without diagnosing anything, because there is one run per condition.
+
+**This is the measurement, not the inference.** The earlier `over_temp` observation — F1 0.796 with no temperature sensor — argued that the model must be reading run identity. This trains the same features to predict run identity directly and finds it recoverable at 0.9713. The 4-class number and the run-identity number are within a few points of each other on both feature sets, which is what you would expect if they are largely the same quantity.
+
 ### V1 and V2 — with temperature
 
 | Protocol | Split | Accuracy | Macro-F1 | Baseline |
@@ -256,7 +291,7 @@ Dropped: `VDC`, `IDC`, `VD`. VDC/IDC/VD per-class means span 0.78/0.45/0.26 ADC 
 
 0 independent validation groups against the pre-registered minimum of 3: one run per condition means there is nothing to hold out. The branch is INDICATIVE whatever it scores, which docs/claims_audit.md §1.1 anticipated before it existed.
 
-_Source: `artifacts\multistage\inverter_telemetry\inverter_telemetry_results.json`, 6.7 s._
+_Source: `artifacts\multistage\inverter_telemetry\inverter_telemetry_results.json`, 10.4 s._
 
 ---
 

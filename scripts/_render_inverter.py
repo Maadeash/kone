@@ -56,9 +56,48 @@ def render_inverter(r, fmt):
         L.append(f"> {ce['open_circuit_note']}")
         L.append("")
 
-    # -- V1 / V2 ------------------------------------------------------------
     v1 = r["V1_block_split"]["scores"]
     v2 = r["V2_shuffled_LEAKY"]["scores"]
+
+    rid = r.get("run_identification_control")
+    if rid:
+        L.append("### The run-identification control — the inference, measured")
+        L.append("")
+        L.append(f"> {rid['question']}")
+        L.append("")
+        L.append("| Predicting | Features | Accuracy | Macro-F1 | Baseline |")
+        L.append("|---|---|---|---|---|")
+        L.append(f"| **which run** | with temperature | **{fmt(rid['with_temperature']['accuracy'])}** "
+                 f"| {fmt(rid['with_temperature']['macro_f1'])} "
+                 f"| {fmt(rid['with_temperature']['majority_baseline'])} |")
+        L.append(f"| **which run** | electrical only | **{fmt(rid['electrical_only']['accuracy'])}** "
+                 f"| {fmt(rid['electrical_only']['macro_f1'])} "
+                 f"| {fmt(rid['electrical_only']['majority_baseline'])} |")
+        L.append("")
+        L.append("Set beside the condition scores on the same split and the same features:")
+        L.append("")
+        L.append("| Features | 4-class condition | **which run** | Gap |")
+        L.append("|---|---|---|---|")
+        L.append(f"| with temperature | {fmt(v1['accuracy'])} "
+                 f"| {fmt(rid['with_temperature']['accuracy'])} "
+                 f"| {v1['accuracy'] - rid['with_temperature']['accuracy']:+.4f} |")
+        L.append(f"| electrical only | {fmt(b3['accuracy'])} "
+                 f"| {fmt(rid['electrical_only']['accuracy'])} "
+                 f"| {b3['accuracy'] - rid['electrical_only']['accuracy']:+.4f} |")
+        L.append("")
+        L.append(f"> {rid['interpretation']}")
+        L.append("")
+        L.append("**This is the measurement, not the inference.** The earlier "
+                 "`over_temp` observation — F1 0.796 with no temperature sensor — "
+                 "argued that the model must be reading run identity. This trains "
+                 "the same features to predict run identity directly and finds it "
+                 f"recoverable at {fmt(rid['with_temperature']['accuracy'])}. The "
+                 "4-class number and the run-identity number are within a few points "
+                 "of each other on both feature sets, which is what you would expect "
+                 "if they are largely the same quantity.")
+        L.append("")
+
+    # -- V1 / V2 ------------------------------------------------------------
     L.append("### V1 and V2 — with temperature")
     L.append("")
     L.append("| Protocol | Split | Accuracy | Macro-F1 | Baseline |")

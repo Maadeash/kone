@@ -31,6 +31,8 @@ from drivesentinel.adapters import bacha_inverter as B
 from drivesentinel.branches import inverter_telemetry as IT
 from drivesentinel.common import splits as SP
 
+NL = chr(10)
+
 OUT_DIR = os.path.join(C.ARTIFACT_DIR, "multistage", "inverter_telemetry")
 
 # One window is 50 samples at hop 10, so consecutive windows share 80 % of their
@@ -225,6 +227,44 @@ def main():
     v2 = run_shuffled(D, "family", labels, a.seed)
     res["V2_shuffled_LEAKY"] = {"protocol": "random window split", "scores": v2}
     print(f"    acc {v2['accuracy']:.4f} macroF1 {v2['macro_f1']:.4f}  (LEAKY)")
+
+    # -- RUN-IDENTIFICATION CONTROL ---------------------------------------
+    # The over_temp-without-a-thermometer result is an INFERENCE that the model
+    # is reading run identity. This measures it directly: predict WHICH RUN a
+    # window came from, same features, same block split. If run identity is
+    # recoverable then so is anything perfectly correlated with it -- and the
+    # condition label IS perfectly correlated with it, because there is exactly
+    # one run per condition.
+    print(NL + "  === RUN-IDENTIFICATION CONTROL ===", flush=True)
+    runs = sorted(set(D["run"].tolist()))
+    rid_full = run_block(D, "run", runs, a.seed)
+    rid_elec = run_block(E, "run", runs, a.seed)
+    res["run_identification_control"] = {
+        "question": ("Can the model tell WHICH RUN a window came from? One run per "
+                     "condition means run identity and condition label are the same "
+                     "variable, so whatever fraction of the 4-class score is run "
+                     "identification is not condition diagnosis."),
+        "with_temperature": {k: rid_full[k] for k in
+                             ("accuracy", "macro_f1", "majority_baseline", "n")},
+        "electrical_only": {k: rid_elec[k] for k in
+                            ("accuracy", "macro_f1", "majority_baseline", "n")},
+        "n_runs": len(runs),
+        "interpretation": (
+            f"Run identity is recoverable at {rid_full['accuracy']:.4f} with "
+            f"temperature and {rid_elec['accuracy']:.4f} from the electrical "
+            f"channels alone, against a {rid_full['majority_baseline']:.4f} "
+            f"majority baseline over {len(runs)} runs. The 4-class family score is "
+            f"an upper bound on condition diagnosis by that margin: a model that can "
+            f"name the run can name the condition without diagnosing anything, "
+            f"because there is one run per condition."),
+    }
+    print(f"    predict run (with temperature): acc {rid_full['accuracy']:.4f} "
+          f"macroF1 {rid_full['macro_f1']:.4f} "
+          f"(base {rid_full['majority_baseline']:.4f}, {len(runs)} runs)")
+    print(f"    predict run (electrical only) : acc {rid_elec['accuracy']:.4f} "
+          f"macroF1 {rid_elec['macro_f1']:.4f}")
+    print("    -> compare against the 4-class scores above: that is how much of "
+          "them is run identity")
 
     # -- 9-class: qualitative only ----------------------------------------
     loc_labels = sorted(set(D["location"].tolist()))

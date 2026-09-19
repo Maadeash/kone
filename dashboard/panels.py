@@ -178,6 +178,27 @@ def _winding_extras() -> List[Dict]:
     ]
     out.append({"label": "healthy", "value": "NOT MEASURABLE",
                 "sub": "all three healthy recordings are from one session"})
+
+    # Declared negative experiment. On the card because a branch that tried a
+    # bigger model and reports that it did not help is more trustworthy than one
+    # that quietly did not try.
+    cnn_p = os.path.join(C.ARTIFACT_DIR, "multistage", "winding",
+                         "winding_cnn_results.json")
+    if os.path.exists(cnn_p):
+        with open(cnn_p) as fh:
+            cnn = json.load(fh)
+        v = cnn["verdict"]
+        out.append({
+            "label": "CNN experiment (declared, post-hoc)",
+            "value": f"{v['outcome']}",
+            "sub": (f"V5 {v['v5_accuracy_mean']:.4f} ± {v['v5_accuracy_std']:.4f} "
+                    f"vs GBM {cnn['acceptance']['gbm_v5_accuracy']:.4f}; "
+                    f"both pre-declared criteria failed — GBM ships")})
+        out.append({
+            "label": "CNN on the leaky split",
+            "value": f"{cnn['V3_shuffled_LEAKY']['accuracy']['mean']:.4f}",
+            "sub": ("vs GBM 0.9990 — the leaky score was largely per-recording "
+                    "memorisation a CNN cannot reach")})
     return out
 
 
