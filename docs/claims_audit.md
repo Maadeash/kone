@@ -559,6 +559,37 @@ the group test. That is the floor doing the job it was written for: the binding
 constraint on this project is how many independent machines each dataset contains,
 not how well a model fits.
 
+### 1.17 D2 CNN experiment — post-hoc, criteria declared before the run
+
+**This was run AFTER the gradient-boosting result was known.** It is a post-hoc experiment and is declared as one. What makes it legitimate rather than fishing is that the recipe and the acceptance criteria were written into `scripts/experiments/d2_cnn.py` and **committed before the first run** (commit `05cf8d7`), so neither could be adjusted after seeing the numbers.
+
+**Hypothesis:** a CNN on the full f/f_e harmonic spectrum finds inter-coil vs inter-turn structure that 23 scalar features miss.
+
+**Recipe, fixed in advance:** OrderSpectrumCNN (16,9,2)(32,7,2)(64,5,2)(64,3,2) + GAP + linear, 512 bins over 0–20 orders, 30 epochs, lr 0.003, batch 256, OneCycle, label smoothing 0.05, class-balanced weights, seeds [0, 1, 2]. Single model, no ensemble, no TTA, **no hyperparameter search**. 10,463 windows — the same rows, task and splits as the GBM run; only the features and the model change.
+
+| Protocol | CNN (mean ± std, 3 seeds) | Gradient boosting |
+|---|---|---|
+| V1 leave-one-motor-out | 0.4719 ± 0.0081 | 0.3784 |
+| **V5 leave-one-session-out** | **0.5608 ± 0.0142** | **0.6251** |
+| V3 shuffled **(leaky reference)** | 0.8448 ± 0.0078 | 0.9990 |
+
+**Acceptance criteria, as declared:**
+
+| # | Criterion | Threshold | Measured | Outcome |
+|---|---|---|---|---|
+| 1 | V5 beats the session-only baseline — the `i0rel_residual` 1-NN, a scalar that cannot contain winding information | > 0.750 | 0.5608 | **FAIL** |
+| 2 | V5 beats the GBM by more than the seed spread | > 0.6251 + 0.0142 | margin -0.0643 | **FAIL** |
+
+**Outcome: NEGATIVE RESULT.** Shipped branch: **gradient boosting (unchanged)**.
+
+The hypothesis is not supported. A CNN with capacity comparable to the bearing model (26,914 parameters against 27,024), given the whole spectrum rather than 23 scalars, does not recover winding structure the scalar features missed — because on this dataset the structure that survives a session-aware split is mostly not winding structure. This is consistent with everything else measured on D2: the session is recoverable at 1.000 from a quantity that is zero by Kirchhoff, and V1 sits below its own majority baseline for both models.
+
+**No further CNN variants were tried.** Sweeping architectures against a declared acceptance criterion until one passes is exactly the failure the criterion exists to prevent. One recipe, declared, run, reported.
+
+**The tier does not move.** INDICATIVE -- 2 validation groups against a floor of 3, whatever this scores. The floor is on GROUPS as well as macro-F1 and was pre-registered before any branch existed.
+
+Regenerate: `python scripts/experiments/d2_cnn.py`. Results in `artifacts/multistage/winding/winding_cnn_results.json`.
+
 ---
 
 ## 2. Bearing pipeline (S5, frozen)

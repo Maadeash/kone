@@ -82,6 +82,28 @@ Same features, predicting the acquisition variable instead of the fault class.
 
 2 scored validation group(s) against the pre-registered minimum of 3; macro-F1 0.6250 against the minimum of 0.75. The floor was pre-registered before any multi-stage branch existed and has not been adjusted.
 
+### Post-hoc experiment — CNN vs gradient boosting
+
+**POST-HOC -- run after the gradient-boosting result was known.** Recipe and acceptance criteria were committed before the run (`scripts/experiments/d2_cnn.py`, commit `05cf8d7`). One recipe, no sweep, 3 seeds.
+
+| Protocol | CNN (mean ± std over seeds) | Gradient boosting | Baseline |
+|---|---|---|---|
+| V1 leave-one-motor-out | 0.4719 ± 0.0081 | 0.3784 | 0.5020 |
+| **V5 leave-one-session-out** | 0.5608 ± 0.0142 | 0.6251 | 0.5975 |
+| V3 shuffled **(leaky reference)** | 0.8448 ± 0.0078 | 0.9990 | 0.5020 |
+| — | **session-only baseline** | 0.750 | 0.467 |
+
+#### Acceptance criteria, as declared
+
+| Criterion | Threshold | Result | Outcome |
+|---|---|---|---|
+| 1. V5 beats the session-only baseline | > 0.750 | 0.5608 | **FAIL** |
+| 2. V5 beats the GBM by more than the seed spread | > 0.6251 + 0.0142 | margin -0.0643 | **FAIL** |
+
+**Outcome: NEGATIVE RESULT.** Shipped branch: **gradient boosting (unchanged)**.
+
+INDICATIVE -- 2 validation groups against a floor of 3, whatever this scores. The floor is on GROUPS as well as macro-F1 and was pre-registered before any branch existed.
+
 _Source: `artifacts\multistage\winding\winding_results.json`, 112.8 s._
 
 ---

@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from drivesentinel import config as C
 from drivesentinel import fusion as FU
 from drivesentinel import trip as TR
-from scripts._render_supply import render_supply
+from scripts._render_supply import render_supply, render_cnn_comparison
 from scripts._render_inverter import render_inverter
 
 BRANCHES = [
@@ -154,6 +154,11 @@ def main():
             r = json.load(fh)
         if slug == "winding":
             lines += render_winding(r)
+            cnn_path = os.path.join(C.ARTIFACT_DIR, "multistage", "winding",
+                                    "winding_cnn_results.json")
+            if os.path.exists(cnn_path):
+                with open(cnn_path) as fh:
+                    lines += render_cnn_comparison(json.load(fh), r, fmt)
         elif slug == "supply":
             lines += render_supply(r, fmt)
         elif slug == "inverter_telemetry":

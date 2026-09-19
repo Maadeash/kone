@@ -106,3 +106,54 @@ def render_supply(r, fmt):
              f"branch can be perfectly right and still not be trusted alone.")
     L.append("")
     return L
+
+
+def render_cnn_comparison(cnn, gbm, fmt):
+    """
+    CNN vs gradient boosting on B-S4, same task and same splits.
+
+    Lives here rather than in the winding renderer because it is a POST-HOC
+    experiment, not part of the branch's declared protocol set. It is rendered
+    only when winding_cnn_results.json exists.
+    """
+    L = []
+    v = cnn["verdict"]
+    L.append("### Post-hoc experiment — CNN vs gradient boosting")
+    L.append("")
+    L.append(f"**{cnn['status']}.** Recipe and acceptance criteria were committed "
+             f"before the run (`scripts/experiments/d2_cnn.py`, commit `05cf8d7`). "
+             f"One recipe, no sweep, {len(cnn['recipe']['seeds'])} seeds.")
+    L.append("")
+    L.append("| Protocol | CNN (mean ± std over seeds) | Gradient boosting | Baseline |")
+    L.append("|---|---|---|---|")
+    rows = [("V1 leave-one-motor-out", "V1_leave_one_motor_out",
+             gbm["V1"]["pooled"]["accuracy"], gbm["V1"]["pooled"]["majority_baseline"]),
+            ("**V5 leave-one-session-out**", "V5_leave_one_session_out",
+             gbm["V5"]["pooled"]["accuracy"], gbm["V5"]["pooled"]["majority_baseline"]),
+            ("V3 shuffled **(leaky reference)**", "V3_shuffled_LEAKY",
+             gbm["V3"]["pooled"]["accuracy"], gbm["V3"]["pooled"]["majority_baseline"])]
+    for name, key, g, base in rows:
+        a = cnn[key]["accuracy"]
+        L.append(f"| {name} | {fmt(a['mean'])} ± {fmt(a['std'], 4)} | {fmt(g)} "
+                 f"| {fmt(base)} |")
+    probe = cnn["acceptance"]["session_only_baseline"]
+    L.append(f"| — | **session-only baseline** | {fmt(probe, 3)} | 0.467 |")
+    L.append("")
+    L.append("#### Acceptance criteria, as declared")
+    L.append("")
+    L.append("| Criterion | Threshold | Result | Outcome |")
+    L.append("|---|---|---|---|")
+    L.append(f"| 1. V5 beats the session-only baseline | > {fmt(probe, 3)} "
+             f"| {fmt(v['v5_accuracy_mean'])} "
+             f"| {'**PASS**' if v['criterion_1_beats_session_baseline'] else '**FAIL**'} |")
+    L.append(f"| 2. V5 beats the GBM by more than the seed spread "
+             f"| > {fmt(cnn['acceptance']['gbm_v5_accuracy'])} + "
+             f"{fmt(v['seed_spread'], 4)} | margin {v['criterion_2_margin']:+.4f} "
+             f"| {'**PASS**' if v['criterion_2_beats_gbm_by_more_than_seed_spread'] else '**FAIL**'} |")
+    L.append("")
+    L.append(f"**Outcome: {v['outcome']}.** Shipped branch: "
+             f"**{v['shipped_branch']}**.")
+    L.append("")
+    L.append(f"{v['tier_unchanged']}")
+    L.append("")
+    return L

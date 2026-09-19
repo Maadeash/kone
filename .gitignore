@@ -9,6 +9,10 @@ venv/
 # 21 GB of Paderborn recordings -- fetch separately
 data/
 
+# Regenerable: the D2 CNN spectrum tensor, 18 MB, rebuilt in 75 s by
+# scripts/experiments/d2_cnn.py. The RESULTS json is tracked; this is not.
+artifacts/multistage/winding/spectra_cnn.npz
+
 # Regenerable: rebuild with scripts/01..05
 artifacts/order_spectra_*.npz
 artifacts/order_spectra_*_meta.parquet
